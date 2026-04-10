@@ -3,7 +3,7 @@
   "include": [
     "src/**/*",
     "typescripts/**/*"
-  ],
+, "parser/keywords.ts"  ],
   "noCheck": false,
   "compilerOptions": {
     "allowUnreachableCode": false,
@@ -60,7 +60,6 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "isolatedDeclarations": true,
     "isolatedModules": true,
     "preserveSymlinks": false,
     "verbatimModuleSyntax": true,

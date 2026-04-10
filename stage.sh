@@ -10,7 +10,7 @@ cd $DIR
 OUTPUT_DIR=./out/
 BUILD_INFO=$OUTPUT_DIR/.last-build
 
-CURR_HASH=`find ./html/ ./stylesheets/ ./typescripts/ ./package.json ./stage.sh ./tsconfig.json ./webpack.config.mjs -type f -print0 | sort -z | xargs -0 sha1sum | sha1sum | cut -d ' ' -f1`
+CURR_HASH=`find ./html/ ./stylesheets/ ./typescripts/ ./package.json ./stage.sh ./tsconfig.json ./webpack.config.mjs ./parser/netlogo.grammar -type f -print0 | sort -z | xargs -0 sha1sum | sha1sum | cut -d ' ' -f1`
 LAST_HASH=notfound
 
 if [ -f $BUILD_INFO ]; then

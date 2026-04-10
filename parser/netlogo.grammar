@@ -1,0 +1,42 @@
+@external specialize { Identifier } keywords from "./keywords.js" {
+  Globals,
+  Extensions,
+  Includes,
+  Breed,
+  To,
+  End,
+  Own,
+  Command,
+  Reporter,
+  Constant
+}
+
+@skip { space | Comment }
+
+@top Program { declaration* procedure* }
+
+declaration {
+  (Globals | Own | Extensions) OpenBracket Identifier* CloseBracket |
+  Includes OpenBracket String* CloseBracket |
+  Breed OpenBracket Identifier Identifier CloseBracket
+}
+
+procedure { To Identifier (OpenBracket Identifier+ CloseBracket)? expression* End }
+
+expression {
+  "(" expression ")" |
+  OpenBracket expression CloseBracket |
+  (Command | Reporter) (Identifier | Number | String | Constant)*
+}
+
+@tokens {
+  space { @whitespace+ }
+  Comment { ";" ![\n]* }
+  identNoDigit { @asciiLetter | "_" | "." | "?" | "=" | "*" | "!" | "<" | ">" | ":" | "#" | "+" | "/" | "%" | "$" | "^" | "'" | "&" | "-" }
+  Identifier { identNoDigit (identNoDigit | @digit)* }
+  Number { "-"? @digit+ ("." @digit+)? ("e" ("+" | "-") @digit+)? }
+  String { '"' (!["] | "\\\"")* '"' }
+  OpenBracket { "[" }
+  CloseBracket { "]" }
+  @precedence { Breed, End, Identifier, Number }
+}
