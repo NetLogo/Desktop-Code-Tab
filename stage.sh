@@ -26,7 +26,7 @@ fi
 if [ "$CURR_HASH" != "$LAST_HASH" ]; then
   rm -rf ./dist/
 
-  npm install
+  npm ci
   npm run build
 
   rm -rf $OUTPUT_DIR
