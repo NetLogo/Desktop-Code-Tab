@@ -1,17 +1,18 @@
-import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
+import { completionKeymap, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { history, indentLess, indentMore, redo, undo } from "@codemirror/commands";
 import {
-  HighlightStyle, indentOnInput, bracketMatching, foldGutter, LRLanguage, LanguageSupport, syntaxHighlighting,
-  defaultHighlightStyle, foldAll, foldCode, foldService, unfoldAll, unfoldCode
+  HighlightStyle, bracketMatching, foldGutter, LRLanguage, LanguageSupport, syntaxHighlighting, defaultHighlightStyle,
+  foldAll, foldCode, foldService, unfoldAll, unfoldCode
 } from "@codemirror/language";
 import { highlightSelectionMatches } from "@codemirror/search";
 import { Compartment, EditorState, Line, SelectionRange, Text, Transaction } from "@codemirror/state";
 import {
-  EditorView, keymap, highlightSpecialChars, drawSelection, highlightActiveLine, dropCursor, rectangularSelection,
-  crosshairCursor, lineNumbers, highlightActiveLineGutter, ViewUpdate
+  EditorView, keymap, drawSelection, highlightActiveLine, rectangularSelection, crosshairCursor, lineNumbers,
+  highlightActiveLineGutter, ViewUpdate
 } from "@codemirror/view";
 import { styleTags, Tag, tags } from "@lezer/highlight";
 
+import { toggleComments } from "./comment.js";
 import { executeIndentations } from "./indent.js";
 import { parser } from "./netlogo.js";
 
@@ -140,14 +141,9 @@ window.onload = () => {
     parent: document.body,
     extensions: [
       foldGutter(),
-      highlightSpecialChars(),
       drawSelection(),
-      dropCursor(),
       EditorState.allowMultipleSelections.of(true),
-      indentOnInput(),
       bracketMatching(),
-      closeBrackets(),
-      autocompletion(),
       rectangularSelection(),
       crosshairCursor(),
       highlightActiveLine(),
@@ -463,93 +459,7 @@ window.toggleComments = () => {
     return false;
   }
 
-  const doc: Text = window.view.state.doc;
-
-  const lines: number[] = window.view.state.selection.ranges.flatMap((range: SelectionRange) => {
-    const startLine: number = doc.lineAt(range.from).number;
-    const endLine: number = doc.lineAt(range.to).number;
-
-    const lines: number[] = [];
-
-    for (let i = startLine; i <= endLine; i++) {
-      lines.push(i);
-    }
-
-    return lines;
-  });
-
-  const nonEmptyLines: string[] = [];
-
-  for (const i of lines) {
-    const line: string = doc.line(i).text;
-
-    if (line.trim().length > 0) {
-      nonEmptyLines.push(line);
-    }
-  }
-
-  if (nonEmptyLines.length == 0) {
-    window.view.dispatch({
-      changes: lines.map((i: number) => {
-        const offset: number = doc.line(i).from;
-
-        return {
-          from: offset,
-          to: offset,
-          insert: "; "
-        };
-      })
-    });
-  } else if (nonEmptyLines.every((line: string) => line.trimStart().startsWith(";"))) {
-    window.view.dispatch({
-      changes: lines.map((i: number) => {
-        const line: Line = doc.line(i);
-
-        const text: string = line.text;
-        const index: number = text.indexOf(";");
-
-        if (index == -1) {
-          return [];
-        }
-
-        const offset: number = line.from + index;
-
-        if (text.length > index + 1 && /\s/.test(text[index + 1] ?? "")) {
-          return {
-            from: offset,
-            to: offset + 2,
-            insert: ""
-          };
-        }
-
-        return {
-          from: offset,
-          to: offset + 1,
-          insert: ""
-        };
-      })
-    });
-  } else {
-    const offset: number = Math.min(...nonEmptyLines.map((line: string) => line.search(/\S/)));
-
-    window.view.dispatch({
-      changes: lines.map((i: number) => {
-        const line: Line = doc.line(i);
-
-        if (line.text.trim().length == 0) {
-          return [];
-        }
-
-        const start: number = line.from + offset;
-
-        return {
-          from: start,
-          to: start,
-          insert: "; "
-        };
-      })
-    });
-  }
+  toggleComments(window.view);
 
   return true;
 };
