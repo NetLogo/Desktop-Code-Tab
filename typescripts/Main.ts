@@ -2,7 +2,7 @@ import { completionKeymap, closeBracketsKeymap } from "@codemirror/autocomplete"
 import { history, indentLess, indentMore, redo, undo } from "@codemirror/commands";
 import {
   HighlightStyle, bracketMatching, foldGutter, LRLanguage, LanguageSupport, syntaxHighlighting, defaultHighlightStyle,
-  foldAll, foldCode, foldService, unfoldAll, unfoldCode
+  foldAll, foldEffect, foldService, unfoldAll, unfoldEffect
 } from "@codemirror/language";
 import { highlightSelectionMatches } from "@codemirror/search";
 import { Compartment, EditorState, Line, SelectionRange, Text, Transaction } from "@codemirror/state";
@@ -32,6 +32,11 @@ interface ColorTheme {
   keyword: string;
   command: string;
   reporter: string;
+}
+
+interface FoldRange {
+  from: number;
+  to: number;
 }
 
 const commandTag: Tag = Tag.define("command", tags.name);
@@ -92,7 +97,8 @@ declare global {
     setNormalSelection: () => void;
     setErrorSelection: () => void;
     setHighlight: (active: boolean) => void;
-    getFolds: (state: EditorState, start: number, end: number) => { from: number, to: number } | null;
+    getFold: (state: EditorState, start: number, end: number) => FoldRange | null;
+    getFolds: (state: EditorState) => FoldRange[];
     foldSelected: () => void;
     unfoldSelected: () => void;
     foldAll: () => void;
@@ -173,7 +179,7 @@ window.onload = () => {
           ]
         })
       })),
-      foldService.of(window.getFolds),
+      foldService.of(window.getFold),
       keymap.of([
         ...closeBracketsKeymap,
         ...completionKeymap,
@@ -537,7 +543,7 @@ window.setHighlight = (active: boolean) => {
   }
 }
 
-window.getFolds = (state: EditorState, start: number, end: number) => {
+window.getFold = (state: EditorState, start: number, end: number) => {
   const doc: Text = state.doc;
   const startLine: Line = doc.lineAt(start);
 
@@ -574,12 +580,46 @@ window.getFolds = (state: EditorState, start: number, end: number) => {
   return null;
 };
 
+window.getFolds = (state: EditorState) => {
+  const doc: Text = state.doc;
+
+  return state.selection.ranges.flatMap((range: SelectionRange) => {
+    const end: number = doc.lineAt(range.to).number;
+    const folds: FoldRange[] = [];
+
+    let current: number = doc.lineAt(range.from).number;
+
+    while (current <= end) {
+      const line: Line = doc.line(current);
+      const fold: FoldRange | null = window.getFold(state, line.from, line.to);
+
+      if (fold) {
+        folds.push(fold);
+
+        current = doc.lineAt(fold.to).number + 1;
+      } else {
+        current++;
+      }
+    }
+
+    return folds;
+  });
+}
+
 window.foldSelected = () => {
-  foldCode(window.view);
+  window.getFolds(window.view.state).forEach((fold) => {
+    window.view.dispatch({
+      effects: foldEffect.of(fold)
+    });
+  });
 };
 
 window.unfoldSelected = () => {
-  unfoldCode(window.view);
+  window.getFolds(window.view.state).forEach((fold) => {
+    window.view.dispatch({
+      effects: unfoldEffect.of(fold)
+    });
+  });
 };
 
 window.foldAll = () => {
