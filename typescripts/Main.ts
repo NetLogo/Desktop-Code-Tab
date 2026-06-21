@@ -91,6 +91,7 @@ declare global {
     setFont: (family: string, size: number) => void;
     setNormalSelection: () => void;
     setErrorSelection: () => void;
+    setHighlight: (active: boolean) => void;
     getFolds: (state: EditorState, start: number, end: number) => { from: number, to: number } | null;
     foldSelected: () => void;
     unfoldSelected: () => void;
@@ -194,32 +195,10 @@ window.onload = () => {
           const canRedo = redo({ state: update.view.state, dispatch: () => {} });
 
           window.bridge.textUpdated(window.overwriting, canUndo, canRedo);
+
+          window.setHighlight(true);
         } else if (update.selectionSet) {
-          if (update.state.selection.main.empty && !window.highlightActive) {
-            window.highlightActive = true;
-
-            update.view.dispatch({
-              effects: [
-                window.highlightConfig.reconfigure(EditorView.theme({
-                  ".cm-activeLine": {
-                    backgroundColor: window.currentTheme.lineHighlight
-                  }
-                }))
-              ]
-            });
-          } else if (!update.state.selection.main.empty && window.highlightActive) {
-            window.highlightActive = false;
-
-            update.view.dispatch({
-              effects: [
-                window.highlightConfig.reconfigure(EditorView.theme({
-                  ".cm-activeLine": {
-                    backgroundColor: "transparent"
-                  }
-                }))
-              ]
-            });
-          }
+          window.setHighlight(update.state.selection.main.empty);
         }
       }),
       window.themeConfig.of(EditorView.theme({})),
@@ -539,6 +518,22 @@ window.setErrorSelection = () => {
     ]
   });
 };
+
+window.setHighlight = (active: boolean) => {
+  if (window.highlightActive != active) {
+    window.highlightActive = active;
+
+    window.view.dispatch({
+      effects: [
+        window.highlightConfig.reconfigure(EditorView.theme({
+          ".cm-activeLine": {
+            backgroundColor: active ? window.currentTheme.lineHighlight : "transparent"
+          }
+        }))
+      ]
+    });
+  }
+}
 
 window.getFolds = (state: EditorState, start: number, end: number) => {
   const doc: Text = state.doc;
