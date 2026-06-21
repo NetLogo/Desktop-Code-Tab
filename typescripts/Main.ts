@@ -627,7 +627,7 @@ window.syncTheme = (theme: ColorTheme) => {
       window.syntaxConfig.reconfigure(syntaxHighlighting(HighlightStyle.define([
         { tag: tags.name, color: theme.default },
         { tag: tags.comment, color: theme.comment },
-        { tag: tags.keyword, color: theme.keyword, fontStyle: "bold" },
+        { tag: tags.keyword, color: theme.keyword, fontWeight: "bold" },
         { tag: tags.literal, color: theme.constant },
         { tag: commandTag, color: theme.command },
         { tag: reporterTag, color: theme.reporter }
