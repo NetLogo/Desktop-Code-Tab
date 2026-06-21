@@ -562,7 +562,13 @@ window.getFolds = (state: EditorState, start: number, end: number) => {
       return null;
     }
 
-    return { from: end, to: doc.line(endLine).to };
+    const to: number = doc.line(endLine).to;
+
+    if (end == to) {
+      return null;
+    }
+
+    return { from: end, to: to };
   }
 
   return null;
