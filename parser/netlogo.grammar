@@ -1,3 +1,5 @@
+@context tracker from "./keywords.js"
+
 @external specialize { Identifier } keywords from "./keywords.js" {
   Globals,
   Extensions,
@@ -38,5 +40,5 @@ expression {
   String { '"' (!["] | "\\\"")* '"' }
   OpenBracket { "[" }
   CloseBracket { "]" }
-  @precedence { Breed, End, Identifier, Number }
+  @precedence { Identifier, Number }
 }

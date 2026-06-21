@@ -1,4 +1,4 @@
-import type { Stack } from "@lezer/lr";
+import { ContextTracker, type Stack } from "@lezer/lr";
 
 import { Globals, Extensions, Includes, Breed, To, End, Own, Command, Reporter, Constant } from "./netlogo.terms.js";
 
@@ -526,14 +526,14 @@ const constants = [
   "white"
 ];
 
-export function keywords(name: string, _: Stack): number {
+export function keywords(name: string, stack: Stack): number {
   const nameLower: string = name.toLowerCase();
 
   switch (nameLower) {
     case "globals": return Globals;
     case "extensions": return Extensions;
     case "__includes": return Includes;
-    case "breed":
+    case "breed": return stack.context == 0 ? Breed : Reporter;
     case "directed-link-breed":
     case "undirected-link-breed": return Breed;
     case "to":
@@ -559,3 +559,14 @@ export function keywords(name: string, _: Stack): number {
       return -1;
   }
 };
+
+export const tracker = new ContextTracker<number>({
+  start: 0,
+  shift(depth: number, term: number, _, __): number {
+    switch (term) {
+      case To: return depth + 1;
+      case End: return depth - 1;
+      default: return depth;
+    }
+  }
+});
