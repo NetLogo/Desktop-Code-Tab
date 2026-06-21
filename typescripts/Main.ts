@@ -409,7 +409,7 @@ window.handleEnter = (view: EditorView) => {
     return false;
   }
 
-  view.dispatch(view.state.replaceSelection("\n"));
+  view.dispatch(view.state.replaceSelection("\n"), { scrollIntoView: true });
 
   executeIndentations(view);
 
