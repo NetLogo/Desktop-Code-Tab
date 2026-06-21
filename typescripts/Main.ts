@@ -329,8 +329,10 @@ window.paste = () => {
 };
 
 window.select = (start: number, end: number) => {
+  const length: number = window.view.state.doc.length;
+
   window.view.dispatch({
-    selection: { anchor: start, head: end },
+    selection: { anchor: Math.min(start, length), head: Math.min(end, length) },
     scrollIntoView: true
   });
 };
