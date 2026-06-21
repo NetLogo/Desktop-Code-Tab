@@ -17,9 +17,16 @@ class TokenizedLine {
   constructor(line: Line, tokens: SyntaxNodeRef[]) {
     this.line = line;
     this.tokens = tokens.filter((node: SyntaxNodeRef) => !node.type.isTop && !node.type.isError);
-    this.leading = Math.max(this.line.text.search(/\S/), 0);
     this.bracketDelta = 0;
     this.bracketsClosed = 0;
+
+    const start = this.line.text.search(/\S/);
+
+    if (start == -1) {
+      this.leading = this.line.length;
+    } else {
+      this.leading = start;
+    }
 
     for (const token of this.tokens) {
       switch (token.type.id) {
