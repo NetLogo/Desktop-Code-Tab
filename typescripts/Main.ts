@@ -609,6 +609,7 @@ window.syncTheme = (theme: ColorTheme) => {
           color: theme.default
         },
         ".cm-gutters": {
+          height: "100vh",
           borderRightColor: theme.gutterBorder
         },
         "& .cm-cursor, & .cm-dropCursor": {
