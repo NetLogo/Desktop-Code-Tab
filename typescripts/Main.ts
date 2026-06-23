@@ -1,5 +1,5 @@
 import { completionKeymap, closeBracketsKeymap } from "@codemirror/autocomplete";
-import { history, indentLess, indentMore, redo, undo } from "@codemirror/commands";
+import { history, indentLess, indentMore, moveLineDown, moveLineUp, redo, undo } from "@codemirror/commands";
 import {
   HighlightStyle, bracketMatching, foldGutter, LRLanguage, LanguageSupport, syntaxHighlighting, defaultHighlightStyle,
   foldAll, foldEffect, foldService, unfoldAll, unfoldEffect
@@ -193,6 +193,8 @@ window.onload = () => {
         { key: "Mod-x", run: window.nullHandler },
         { key: "Mod-v", run: window.nullHandler },
         { key: "Mod-m", run: window.nullHandler },
+        { key: "Alt-ArrowUp", run: moveLineUp },
+        { key: "Alt-ArrowDown", run: moveLineDown },
         { key: "Tab", run: window.indent, shift: window.unindent },
         { key: "Enter", run: window.handleEnter },
         { key: "[", run: window.handleOpenBracket },
