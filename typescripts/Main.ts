@@ -189,6 +189,7 @@ window.onload = () => {
         { key: "Mod-y", run: window.nullHandler },
         { key: "Mod-x", run: window.nullHandler },
         { key: "Mod-v", run: window.nullHandler },
+        { key: "Mod-m", run: window.nullHandler },
         { key: "Tab", run: window.indent, shift: window.unindent },
         { key: "Enter", run: window.handleEnter },
         { key: "[", run: window.handleOpenBracket },
