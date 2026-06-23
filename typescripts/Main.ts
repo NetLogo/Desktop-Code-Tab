@@ -111,6 +111,7 @@ declare global {
       textUpdated: (overwriting: boolean, canUndo: boolean, canRedo: boolean) => void;
       writeClipboard: (text: String) => void;
       readClipboard: () => string;
+      jumpToDeclaration: () => void;
     };
   }
 }
@@ -151,7 +152,9 @@ window.onload = () => {
       drawSelection(),
       EditorState.allowMultipleSelections.of(true),
       bracketMatching(),
-      rectangularSelection(),
+      rectangularSelection({
+        eventFilter: (event: MouseEvent) => event.shiftKey && event.altKey
+      }),
       crosshairCursor(),
       highlightActiveLine(),
       highlightActiveLineGutter(),
@@ -198,6 +201,14 @@ window.onload = () => {
         { key: "n", run: (view: EditorView) => window.handleEnd(view, "n") },
         { key: "d", run: (view: EditorView) => window.handleEnd(view, "d") }
       ]),
+      EditorView.clickAddsSelectionRange.of((event: MouseEvent) => event.altKey),
+      EditorView.domEventHandlers({
+        click: (event: MouseEvent) => {
+          if (event.ctrlKey && event.button == 0) {
+            window.bridge.jumpToDeclaration();
+          }
+        }
+      }),
       EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged) {
           const canUndo = undo({ state: update.view.state, dispatch: () => {} });
