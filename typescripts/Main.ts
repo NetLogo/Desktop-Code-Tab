@@ -155,7 +155,9 @@ window.onload = () => {
       crosshairCursor(),
       highlightActiveLine(),
       highlightActiveLineGutter(),
-      highlightSelectionMatches(),
+      highlightSelectionMatches({
+        wholeWords: true
+      }),
       new LanguageSupport(LRLanguage.define({
         parser: parser.configure({
           props: [
