@@ -1,5 +1,8 @@
 import { completionKeymap, closeBracketsKeymap } from "@codemirror/autocomplete";
-import { history, indentLess, indentMore, moveLineDown, moveLineUp, redo, undo } from "@codemirror/commands";
+import {
+  cursorGroupBackward, cursorGroupForward, deleteGroupBackward, deleteGroupForward, history, indentLess, indentMore,
+  moveLineDown, moveLineUp, redo, selectGroupBackward, selectGroupForward, undo
+} from "@codemirror/commands";
 import {
   HighlightStyle, bracketMatching, foldGutter, LRLanguage, LanguageSupport, syntaxHighlighting, defaultHighlightStyle,
   foldAll, foldEffect, foldService, unfoldAll, unfoldEffect
@@ -193,6 +196,10 @@ window.onload = () => {
         { key: "Mod-x", run: window.nullHandler },
         { key: "Mod-v", run: window.nullHandler },
         { key: "Mod-m", run: window.nullHandler },
+        { key: "Mod-Backspace", mac: "Alt-Backspace", run: deleteGroupBackward },
+        { key: "Mod-Delete", mac: "Alt-Delete", run: deleteGroupForward },
+        { key: "Mod-ArrowLeft", mac: "Alt-ArrowLeft", run: cursorGroupBackward, shift: selectGroupBackward },
+        { key: "Mod-ArrowRight", mac: "Alt-ArrowRight", run: cursorGroupForward, shift: selectGroupForward },
         { key: "Alt-ArrowUp", run: moveLineUp },
         { key: "Alt-ArrowDown", run: moveLineDown },
         { key: "Tab", run: window.indent, shift: window.unindent },
