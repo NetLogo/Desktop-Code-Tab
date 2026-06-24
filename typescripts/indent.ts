@@ -95,7 +95,7 @@ function getUpdate(view: EditorView): IndentUpdate {
       parsedLines.push(new TokenizedLine(currentLine, currentTokens));
     }
 
-    if (parsedLines.length < endLine.number) {
+    if ((parsedLines[parsedLines.length - 1]?.line.number ?? 0) < endLine.number) {
       parsedLines.push(new TokenizedLine(endLine, []));
     }
 
