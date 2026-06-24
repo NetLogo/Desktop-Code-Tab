@@ -63,6 +63,7 @@ function getUpdate(view: EditorView): IndentUpdate {
   const changes: ChangeSpec[] = view.state.selection.ranges.flatMap((range: SelectionRange) => {
     const startLine: Line = doc.lineAt(range.from);
     const endLine: Line = doc.lineAt(range.to);
+    const caretLine: Line = doc.lineAt(range.head);
 
     const tree: Tree = parser.parse(doc.sliceString(0, endLine.to));
 
@@ -92,6 +93,10 @@ function getUpdate(view: EditorView): IndentUpdate {
 
     if (currentTokens.length > 0) {
       parsedLines.push(new TokenizedLine(currentLine, currentTokens));
+    }
+
+    if (parsedLines.length < endLine.number) {
+      parsedLines.push(new TokenizedLine(endLine, []));
     }
 
     let indentLevels: number[] = [];
@@ -242,7 +247,7 @@ function getUpdate(view: EditorView): IndentUpdate {
             insert: " ".repeat(indent)
           });
 
-          if (parsedLines[i]?.line.number == currentLine.number) {
+          if (parsedLines[i]?.line.number == caretLine.number) {
             caretShift = indent - leading;
           }
         }
