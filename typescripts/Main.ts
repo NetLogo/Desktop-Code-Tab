@@ -468,7 +468,7 @@ window.toggleComments = () => {
 };
 
 window.isEditable = () => {
-  return window.view.state.readOnly;
+  return !window.view.state.readOnly;
 };
 
 window.setEditable = (editable: boolean) => {
