@@ -61,7 +61,10 @@ function getUpdate(view: EditorView): IndentUpdate {
   let caretShift = 0;
 
   const changes: ChangeSpec[] = view.state.selection.ranges.flatMap((range: SelectionRange) => {
-    const tree: Tree = parser.parse(doc.sliceString(0, doc.lineAt(range.to).to));
+    const startLine: Line = doc.lineAt(range.from);
+    const endLine: Line = doc.lineAt(range.to);
+
+    const tree: Tree = parser.parse(doc.sliceString(0, endLine.to));
 
     const parsedLines: TokenizedLine[] = [];
 
@@ -226,20 +229,22 @@ function getUpdate(view: EditorView): IndentUpdate {
     const shifts: ChangeSpec[] = [];
 
     for (let i = 0; i < parsedLines.length; i++) {
-      const leading: number = parsedLines[i]?.leading ?? 0;
-      const indent: number = indents[i] ?? 0;
+      if ((parsedLines[i]?.line.number ?? 0) >= startLine.number) {
+        const leading: number = parsedLines[i]?.leading ?? 0;
+        const indent: number = indents[i] ?? 0;
 
-      if (leading != indent) {
-        const start: number = parsedLines[i]?.line.from ?? 0;
+        if (leading != indent) {
+          const start: number = parsedLines[i]?.line.from ?? 0;
 
-        shifts.push({
-          from: start,
-          to: start + leading,
-          insert: " ".repeat(indent)
-        });
+          shifts.push({
+            from: start,
+            to: start + leading,
+            insert: " ".repeat(indent)
+          });
 
-        if (parsedLines[i]?.line.number == currentLine.number) {
-          caretShift = indent - leading;
+          if (parsedLines[i]?.line.number == currentLine.number) {
+            caretShift = indent - leading;
+          }
         }
       }
     }
