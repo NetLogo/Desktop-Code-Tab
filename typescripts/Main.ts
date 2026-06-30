@@ -169,6 +169,9 @@ window.onload = () => {
           props: [
             styleTags({
               Comment: tags.comment,
+              Import: tags.keyword,
+              Export: tags.keyword,
+              As: tags.keyword,
               Globals: tags.keyword,
               Breed: tags.keyword,
               Own: tags.keyword,

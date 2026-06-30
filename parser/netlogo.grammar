@@ -1,6 +1,9 @@
 @context tracker from "./keywords.js"
 
 @external specialize { Identifier } keywords from "./keywords.js" {
+  Import,
+  Export,
+  As,
   Globals,
   Extensions,
   Includes,
@@ -18,6 +21,9 @@
 @top Program { declaration* procedure* }
 
 declaration {
+  Import Identifier (":" Identifier)* (As Identifier)? |
+  Import OpenBracket (Identifier | Identifier As Identifier)* CloseBracket |
+  Export OpenBracket Identifier* CloseBracket |
   (Globals | Own | Extensions) OpenBracket Identifier* CloseBracket |
   Includes OpenBracket String* CloseBracket |
   Breed OpenBracket Identifier Identifier CloseBracket
@@ -34,7 +40,7 @@ expression {
 @tokens {
   space { @whitespace+ }
   Comment { ";" ![\n]* }
-  identNoDigit { @asciiLetter | "_" | "." | "?" | "=" | "*" | "!" | "<" | ">" | ":" | "#" | "+" | "/" | "%" | "$" | "^" | "'" | "&" | "-" }
+  identNoDigit { @asciiLetter | "_" | "." | "?" | "=" | "*" | "!" | "<" | ">" | "#" | "+" | "/" | "%" | "$" | "^" | "'" | "&" | "-" }
   Identifier { identNoDigit (identNoDigit | @digit)* }
   Number { "-"? @digit+ ("." @digit+)? ("e" ("+" | "-") @digit+)? }
   String { '"' (!["] | "\\\"")* '"' }

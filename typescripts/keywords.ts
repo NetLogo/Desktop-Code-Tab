@@ -1,6 +1,8 @@
 import { ContextTracker, type Stack } from "@lezer/lr";
 
-import { Globals, Extensions, Includes, Breed, To, End, Own, Command, Reporter, Constant } from "./netlogo.terms.js";
+import {
+  As, Globals, Export, Extensions, Import, Includes, Breed, To, End, Own, Command, Reporter, Constant
+} from "./netlogo.terms.js";
 
 const commands = [
   "__apply",
@@ -530,6 +532,9 @@ export function keywords(name: string, stack: Stack): number {
   const nameLower: string = name.toLowerCase();
 
   switch (nameLower) {
+    case "import": return Import;
+    case "export": return Export;
+    case "as": return As;
     case "globals": return Globals;
     case "extensions": return Extensions;
     case "__includes": return Includes;
