@@ -1,4 +1,6 @@
-import { completionKeymap, closeBracketsKeymap } from "@codemirror/autocomplete";
+import {
+  type Completion, CompletionContext, type CompletionResult, autocompletion, closeBracketsKeymap, completionKeymap
+} from "@codemirror/autocomplete";
 import {
   cursorGroupBackward, cursorGroupForward, deleteGroupBackward, deleteGroupForward, history, indentLess, indentMore,
   moveLineDown, moveLineUp, redo, selectGroupBackward, selectGroupForward, undo
@@ -42,6 +44,52 @@ interface FoldRange {
   to: number;
 }
 
+class Trie {
+  value?: string;
+  type?: string;
+  children: Map<string, Trie> = new Map<string, Trie>();
+
+  append(value: string, type: string, offset: number = 0): void {
+    if (value[offset]) {
+      const child: Trie = this.children.get(value[offset]) ?? new Trie();
+
+      child.append(value, type, offset + 1);
+
+      this.children.set(value[offset], child);
+    } else {
+      this.value = value;
+      this.type = type;
+    }
+  }
+
+  appendAll(values: string[], type: string): void {
+    values.forEach(value => {
+      this.append(value, type);
+    });
+  }
+
+  matches(value: string, offset: number = 0): Completion[] {
+    if (value[offset]) {
+      return this.children.get(value[offset])?.matches(value, offset + 1) ?? [];
+    }
+
+    const entries: Completion[] = [];
+
+    this.children.forEach((child: Trie) => {
+      entries.push(...child.matches("", offset + 1));
+    });
+
+    if (this.value) {
+      entries.push({
+        label: this.value,
+        type: this.type
+      });
+    }
+
+    return entries;
+  }
+}
+
 const commandTag: Tag = Tag.define("command", tags.name);
 const reporterTag: Tag = Tag.define("reporter", tags.name);
 
@@ -58,6 +106,8 @@ declare global {
     editableConfig: Compartment;
     readOnlyConfig: Compartment;
     lineNumbersConfig: Compartment;
+
+    program: Trie;
 
     currentTheme: ColorTheme;
 
@@ -106,6 +156,10 @@ declare global {
     unfoldSelected: () => void;
     foldAll: () => void;
     unfoldAll: () => void;
+    setProgram: (keywords: string[], constants: string[], globals: string[], variables: string[], commands: string[],
+                 reporters: string[]) => void;
+    autocomplete: (context: CompletionContext) => CompletionResult | null;
+    doScroll: (mouseX: number, mouseY: number, scrollX: number, scrollY: number) => void;
     syncTheme: (theme: ColorTheme) => void;
     nullHandler: (view: EditorView) => boolean;
 
@@ -164,6 +218,10 @@ window.onload = () => {
       highlightSelectionMatches({
         wholeWords: true
       }),
+      autocompletion({
+        icons: false,
+        optionClass: (completion: Completion): string => `cm-completionLabel-${completion.type}`
+      }),
       new LanguageSupport(LRLanguage.define({
         parser: parser.configure({
           props: [
@@ -188,7 +246,10 @@ window.onload = () => {
               Constant: tags.literal
             })
           ]
-        })
+        }),
+        languageData: {
+          "autocomplete": window.autocomplete
+        }
       })),
       foldService.of(window.getFold),
       keymap.of([
@@ -458,13 +519,17 @@ window.handleEnd = (view: EditorView, char: string) => {
     return false;
   }
 
-  view.dispatch(view.state.replaceSelection(char));
+  const newDoc: Text = view.state.update(view.state.replaceSelection(char)).newDoc;
 
-  if (view.state.doc.lineAt(view.state.selection.main.head).text.trimStart().toLowerCase().startsWith("end")) {
+  if (newDoc.lineAt(view.state.selection.main.head).text.trimStart().toLowerCase().startsWith("end")) {
+    view.dispatch(view.state.replaceSelection(char));
+
     executeIndentations(view);
+
+    return true;
   }
 
-  return true;
+  return false;
 };
 
 window.toggleComments = () => {
@@ -520,9 +585,9 @@ window.setFont = (family: string, size: number) => {
   window.view.dispatch({
     effects: [
       window.fontConfig.reconfigure(EditorView.theme({
-        "&, .cm-content, .cm-gutters": {
-          fontSize: size + "pt",
-          fontFamily: family + ", monospace"
+        "&, .cm-completionLabel, .cm-content, .cm-gutters": {
+          fontSize: `${size}pt`,
+          fontFamily: `${family}, monospace`
         }
       }))
     ]
@@ -656,6 +721,48 @@ window.unfoldAll = () => {
   unfoldAll(window.view);
 };
 
+window.setProgram = (keywords: string[], constants: string[], globals: string[], variables: string[],
+                     commands: string[], reporters: string[]) => {
+  window.program = new Trie();
+
+  window.program.appendAll(keywords, "keyword");
+  window.program.appendAll(constants, "constant");
+  window.program.appendAll(globals, "global");
+  window.program.appendAll(variables, "variable");
+  window.program.appendAll(commands, "command");
+  window.program.appendAll(reporters, "reporter");
+};
+
+window.autocomplete = (context: CompletionContext) => {
+  const match = context.matchBefore(/[\w\-:.?=*!<>#+/%$\^'&]+/);
+
+  if (match) {
+    return {
+      from: match.from,
+      options: window.program.matches(match.text.toLowerCase())
+    };
+  }
+
+  if (context.explicit) {
+    return {
+      from: context.pos,
+      options: window.program.matches("")
+    };
+  }
+
+  return null;
+};
+
+window.doScroll = (mouseX: number, mouseY: number, scrollX: number, scrollY: number) => {
+  const popup: Element | null = document.querySelector(".cm-tooltip-autocomplete ul");
+
+  if (popup?.contains(document.elementFromPoint(mouseX, mouseY))) {
+    popup.scrollBy(scrollX, scrollY);
+  } else {
+    window.scrollBy(scrollX, scrollY);
+  }
+}
+
 window.syncTheme = (theme: ColorTheme) => {
   document.body.style.background = theme.background;
 
@@ -686,6 +793,30 @@ window.syncTheme = (theme: ColorTheme) => {
         },
         ".cm-selectionMatch": {
           backgroundColor: theme.selection + " !important"
+        },
+        ".cm-tooltip-autocomplete": {
+          backgroundColor: theme.background
+        },
+        ".cm-tooltip-autocomplete ul li[aria-selected]": {
+          backgroundColor: theme.selection
+        },
+        ".cm-completionLabel-keyword, .cm-tooltip-autocomplete ul .cm-completionLabel-keyword[aria-selected]": {
+          color: theme.keyword
+        },
+        ".cm-completionLabel-constant, .cm-tooltip-autocomplete ul .cm-completionLabel-constant[aria-selected]": {
+          color: theme.constant
+        },
+        ".cm-completionLabel-global, .cm-tooltip-autocomplete ul .cm-completionLabel-global[aria-selected]": {
+          color: theme.default
+        },
+        ".cm-completionLabel-variable, .cm-tooltip-autocomplete ul .cm-completionLabel-variable[aria-selected]": {
+          color: theme.reporter
+        },
+        ".cm-completionLabel-reporter, .cm-tooltip-autocomplete ul .cm-completionLabel-reporter[aria-selected]": {
+          color: theme.reporter
+        },
+        ".cm-completionLabel-command, .cm-tooltip-autocomplete ul .cm-completionLabel-command[aria-selected]": {
+          color: theme.command
         }
       })),
       window.highlightConfig.reconfigure(EditorView.theme({
