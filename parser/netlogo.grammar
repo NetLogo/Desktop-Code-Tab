@@ -21,7 +21,7 @@
 @top Program { declaration* procedure* }
 
 declaration {
-  Import Identifier (":" Identifier)* (As Identifier)? |
+  Import Identifier (As Identifier)? |
   Import OpenBracket (Identifier | Identifier As Identifier)* CloseBracket |
   Export OpenBracket Identifier* CloseBracket |
   (Globals | Own | Extensions) OpenBracket Identifier* CloseBracket |
@@ -40,7 +40,7 @@ expression {
 @tokens {
   space { @whitespace+ }
   Comment { ";" ![\n]* }
-  identNoDigit { @asciiLetter | "_" | "." | "?" | "=" | "*" | "!" | "<" | ">" | "#" | "+" | "/" | "%" | "$" | "^" | "'" | "&" | "-" }
+  identNoDigit { @asciiLetter | "_" | "." | "?" | "=" | "*" | "!" | "<" | ">" | "#" | "+" | "/" | "%" | "$" | "^" | "'" | "&" | "-" | ":" }
   Identifier { identNoDigit (identNoDigit | @digit)* }
   Number { "-"? @digit+ ("." @digit+)? ("e" ("+" | "-") @digit+)? }
   String { '"' (!["] | "\\\"")* '"' }

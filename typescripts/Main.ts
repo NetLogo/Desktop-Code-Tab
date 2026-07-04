@@ -68,6 +68,21 @@ class Trie {
     });
   }
 
+  match(value: string, offset: number = 0): Completion | undefined {
+    if (value[offset]) {
+      return this.children.get(value[offset])?.match(value, offset + 1);
+    }
+
+    if (this.value == value) {
+      return {
+        label: this.value,
+        type: this.type
+      };
+    }
+
+    return undefined;
+  }
+
   matches(value: string, offset: number = 0): Completion[] {
     if (value[offset]) {
       return this.children.get(value[offset])?.matches(value, offset + 1) ?? [];
