@@ -105,6 +105,18 @@ class Trie {
   }
 }
 
+class Program extends Trie {
+  readonly decls: string[];
+
+  constructor(keywords: string[]) {
+    super()
+
+    this.decls = keywords.filter(value => !value.match("to|to-report|import|export"));
+  }
+}
+
+const identRegex: RegExp = /[\w\-:.?=*!<>#+/%$\^'&]+/;
+
 const commandTag: Tag = Tag.define("command", tags.name);
 const reporterTag: Tag = Tag.define("reporter", tags.name);
 
@@ -122,7 +134,7 @@ declare global {
     readOnlyConfig: Compartment;
     lineNumbersConfig: Compartment;
 
-    program: Trie;
+    program: Program;
 
     currentTheme: ColorTheme;
 
@@ -738,7 +750,7 @@ window.unfoldAll = () => {
 
 window.setProgram = (keywords: string[], constants: string[], globals: string[], variables: string[],
                      commands: string[], reporters: string[]) => {
-  window.program = new Trie();
+  window.program = new Program(keywords);
 
   window.program.appendAll(keywords, "keyword");
   window.program.appendAll(constants, "constant");
@@ -749,9 +761,28 @@ window.setProgram = (keywords: string[], constants: string[], globals: string[],
 };
 
 window.autocomplete = (context: CompletionContext) => {
-  const match = context.matchBefore(/[\w\-:.?=*!<>#+/%$\^'&]+/);
+  const match = context.matchBefore(identRegex);
 
-  if (match) {
+  if (match && context.explicit) {
+    return {
+      from: match.from,
+      options: window.program.matches(match.text.toLowerCase())
+    };
+  }
+
+  const doc: Text = context.state.doc;
+
+  if (match && doc.sliceString(match.from - 1, match.from) != '"') {
+    const line: string = doc.sliceString(doc.lineAt(match.from).from, match.from).toLowerCase();
+
+    const procMatch = line.match(`^\\s*(to|to-report)\\s+(${identRegex}\\s*\\[)?`);
+    const modMatch = line.match(/^\s*(import|export)\s+\[?/);
+    const declMatch = line.match(`^\\s*(${window.program.decls.join("|")})\\s*\\[`);
+
+    if (procMatch || modMatch || declMatch) {
+      return null;
+    }
+
     return {
       from: match.from,
       options: window.program.matches(match.text.toLowerCase())
