@@ -211,6 +211,8 @@ window.onload = () => {
   window.readOnlyConfig = new Compartment();
   window.lineNumbersConfig = new Compartment();
 
+  window.program = new Program([]);
+
   window.currentTheme = {
     background: "",
     gutterBorder: "",
