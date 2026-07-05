@@ -142,6 +142,7 @@ declare global {
     highlightActive: boolean;
     smartIndent: boolean;
     lineNumbers: boolean;
+    completeOnType: boolean;
 
     getText: () => string;
     getSelectionStart: () => number;
@@ -173,6 +174,7 @@ declare global {
     setIndenter: (smart: boolean) => void;
     getLineNumbers: () => boolean;
     setLineNumbers: (visible: boolean) => void;
+    setCompleteOnType: (enabled: boolean) => void;
     setFont: (family: string, size: number) => void;
     setNormalSelection: () => void;
     setErrorSelection: () => void;
@@ -610,6 +612,10 @@ window.setLineNumbers = (visible: boolean) => {
   }
 };
 
+window.setCompleteOnType = (enabled: boolean) => {
+  window.completeOnType = enabled;
+}
+
 window.setFont = (family: string, size: number) => {
   window.view.dispatch({
     effects: [
@@ -765,16 +771,16 @@ window.setProgram = (keywords: string[], constants: string[], globals: string[],
 window.autocomplete = (context: CompletionContext) => {
   const match = context.matchBefore(identRegex);
 
-  if (match && context.explicit) {
+  if (context.explicit) {
     return {
-      from: match.from,
-      options: window.program.matches(match.text.toLowerCase())
+      from: match?.from ?? context.pos,
+      options: window.program.matches(match?.text.toLowerCase() ?? "")
     };
   }
 
   const doc: Text = context.state.doc;
 
-  if (match && doc.sliceString(match.from - 1, match.from) != '"') {
+  if (match && window.completeOnType && doc.sliceString(match.from - 1, match.from) != '"') {
     const line: string = doc.sliceString(doc.lineAt(match.from).from, match.from).toLowerCase();
 
     const procMatch = line.match(`^\\s*(to|to-report)\\s+(${identRegex}\\s*\\[)?`);
@@ -788,13 +794,6 @@ window.autocomplete = (context: CompletionContext) => {
     return {
       from: match.from,
       options: window.program.matches(match.text.toLowerCase())
-    };
-  }
-
-  if (context.explicit) {
-    return {
-      from: context.pos,
-      options: window.program.matches("")
     };
   }
 
