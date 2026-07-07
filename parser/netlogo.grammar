@@ -3,6 +3,7 @@
 @external specialize { Identifier } keywords from "./keywords.js" {
   Import,
   Export,
+  From,
   As,
   Globals,
   Extensions,
@@ -22,7 +23,7 @@
 
 declaration {
   Import Identifier (As Identifier)? |
-  Import OpenBracket (Identifier | Identifier As Identifier)* CloseBracket |
+  Import OpenBracket (Identifier | Identifier As Identifier)* CloseBracket From Identifier |
   Export OpenBracket Identifier* CloseBracket |
   (Globals | Own | Extensions) OpenBracket Identifier* CloseBracket |
   Includes OpenBracket String* CloseBracket |

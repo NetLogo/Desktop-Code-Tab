@@ -1,7 +1,7 @@
 import { ContextTracker, type Stack } from "@lezer/lr";
 
 import {
-  As, Globals, Export, Extensions, Import, Includes, Breed, To, End, Own, Command, Reporter, Constant
+  As, Globals, Export, Extensions, From, Import, Includes, Breed, To, End, Own, Command, Reporter, Constant
 } from "./netlogo.terms.js";
 
 export function keywords(name: string, stack: Stack): number {
@@ -10,6 +10,7 @@ export function keywords(name: string, stack: Stack): number {
   switch (nameLower) {
     case "import": return Import;
     case "export": return Export;
+    case "from": return From;
     case "as": return As;
     case "globals": return Globals;
     case "extensions": return Extensions;

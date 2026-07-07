@@ -260,6 +260,7 @@ window.onload = () => {
               Comment: tags.comment,
               Import: tags.keyword,
               Export: tags.keyword,
+              From: tags.keyword,
               As: tags.keyword,
               Globals: tags.keyword,
               Breed: tags.keyword,
