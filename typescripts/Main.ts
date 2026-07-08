@@ -105,13 +105,39 @@ class Trie {
   }
 }
 
-class Program extends Trie {
-  readonly decls: string[];
+class Program {
+  decls: string[] = [];
 
-  constructor(keywords: string[]) {
-    super()
+  private core: Trie = new Trie();
+  private compiled: Trie = new Trie();
 
+  setCore(keywords: string[], constants: string[], commands: string[], reporters: string[]) {
     this.decls = keywords.filter(value => !value.match("to|to-report|import|export"));
+
+    this.core = new Trie();
+
+    this.core.appendAll(keywords, "keyword");
+    this.core.appendAll(constants, "constant");
+    this.core.appendAll(commands, "command");
+    this.core.appendAll(reporters, "reporter");
+  }
+
+  setCompiled(keywords: string[], globals: string[], variables: string[], commands: string[], reporters: string[]) {
+    this.compiled = new Trie();
+
+    this.compiled.appendAll(keywords, "keyword");
+    this.compiled.appendAll(globals, "global");
+    this.compiled.appendAll(variables, "variable");
+    this.compiled.appendAll(commands, "command");
+    this.compiled.appendAll(reporters, "reporter");
+  }
+
+  match(value: string, offset: number = 0): Completion | undefined {
+    return this.core.match(value, offset) ?? this.compiled.match(value, offset);
+  }
+
+  matches(value: string, offset: number = 0): Completion[] {
+    return this.core.matches(value, offset).concat(this.compiled.matches(value, offset));
   }
 }
 
@@ -185,8 +211,9 @@ declare global {
     unfoldSelected: () => void;
     foldAll: () => void;
     unfoldAll: () => void;
-    setProgram: (keywords: string[], constants: string[], globals: string[], variables: string[], commands: string[],
-                 reporters: string[]) => void;
+    setCoreProgram: (keywords: string[], constants: string[], commands: string[], reporters: string[]) => void;
+    setCompiledProgram: (keywords: string[], globals: string[], variables: string[], commands: string[],
+                         reporters: string[]) => void;
     autocomplete: (context: CompletionContext) => CompletionResult | null;
     doScroll: (mouseX: number, mouseY: number, scrollX: number, scrollY: number) => void;
     syncTheme: (theme: ColorTheme) => void;
@@ -213,7 +240,7 @@ window.onload = () => {
   window.readOnlyConfig = new Compartment();
   window.lineNumbersConfig = new Compartment();
 
-  window.program = new Program([]);
+  window.program = new Program();
 
   window.currentTheme = {
     background: "",
@@ -757,16 +784,13 @@ window.unfoldAll = () => {
   unfoldAll(window.view);
 };
 
-window.setProgram = (keywords: string[], constants: string[], globals: string[], variables: string[],
-                     commands: string[], reporters: string[]) => {
-  window.program = new Program(keywords);
+window.setCoreProgram = (keywords: string[], constants: string[], commands: string[], reporters: string[]) => {
+  window.program.setCore(keywords, constants, commands, reporters);
+};
 
-  window.program.appendAll(keywords, "keyword");
-  window.program.appendAll(constants, "constant");
-  window.program.appendAll(globals, "global");
-  window.program.appendAll(variables, "variable");
-  window.program.appendAll(commands, "command");
-  window.program.appendAll(reporters, "reporter");
+window.setCompiledProgram = (keywords: string[], globals: string[], variables: string[], commands: string[],
+                             reporters: string[]) => {
+  window.program.setCompiled(keywords, globals, variables, commands, reporters);
 };
 
 window.autocomplete = (context: CompletionContext) => {
