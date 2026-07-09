@@ -218,6 +218,8 @@ declare global {
     doScroll: (mouseX: number, mouseY: number, scrollX: number, scrollY: number) => void;
     syncTheme: (theme: ColorTheme) => void;
     nullHandler: (view: EditorView) => boolean;
+    toBase64: (text: string) => string;
+    fromBase64: (text: string) => string;
 
     bridge: {
       log: (message: String) => void;
@@ -367,7 +369,7 @@ window.onload = () => {
 };
 
 window.getText = () => {
-  return btoa(window.view.state.doc.toString());
+  return window.toBase64(window.view.state.doc.toString());
 };
 
 window.getSelectionStart = () => {
@@ -384,7 +386,7 @@ window.getSelectedText = () => {
   const state: EditorState = window.view.state;
   const selection: string = state.selection.ranges.map(range => state.sliceDoc(range.from, range.to)).join("\n");
 
-  return btoa(selection);
+  return window.toBase64(selection);
 };
 
 window.getCaretPosition = () => {
@@ -415,7 +417,7 @@ window.getTokenAtCaret = () => {
 window.setText = (text: string) => {
   const state: EditorState = window.view.state;
   const transaction: Transaction = state.update({
-    changes: { from: 0, to: state.doc.length, insert: atob(text) },
+    changes: { from: 0, to: state.doc.length, insert: window.fromBase64(text) },
     selection: { anchor: 0, head: 0 },
     scrollIntoView: true
   });
@@ -911,3 +913,11 @@ window.syncTheme = (theme: ColorTheme) => {
 window.nullHandler = (_: EditorView) => {
   return true;
 };
+
+window.toBase64 = (text: string) => {
+  return btoa(String.fromCodePoint(...new TextEncoder().encode(text)));
+};
+
+window.fromBase64 = (text: string) => {
+  return new TextDecoder().decode(Uint8Array.from(atob(text), c => c.codePointAt(0) ?? 0));
+}
