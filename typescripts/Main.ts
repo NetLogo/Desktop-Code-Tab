@@ -788,11 +788,23 @@ window.unfoldAll = () => {
 
 window.setCoreProgram = (keywords: string[], constants: string[], commands: string[], reporters: string[]) => {
   window.program.setCore(keywords, constants, commands, reporters);
+
+  window.overwriting = true;
+  window.view.dispatch({
+    changes: { from: 0, to: window.view.state.doc.length, insert: window.view.state.doc.toString() }
+  });
+  window.overwriting = false;
 };
 
 window.setCompiledProgram = (keywords: string[], globals: string[], variables: string[], commands: string[],
                              reporters: string[]) => {
   window.program.setCompiled(keywords, globals, variables, commands, reporters);
+
+  window.overwriting = true;
+  window.view.dispatch({
+    changes: { from: 0, to: window.view.state.doc.length, insert: window.view.state.doc.toString() }
+  });
+  window.overwriting = false;
 };
 
 window.autocomplete = (context: CompletionContext) => {
