@@ -1,8 +1,15 @@
 import { ContextTracker, type Stack } from "@lezer/lr";
 
 import {
-  As, Globals, Export, Extensions, From, Import, Includes, Breed, To, End, Own, Command, Reporter, Constant
+  As, Globals, Export, Extensions, From, Import, Includes, Breed, To, End, Own, Command, Reporter, Constant,
+  CloseBracket
 } from "./netlogo.terms.js";
+
+enum Context {
+  Top,
+  Breed,
+  Procedure
+}
 
 export function keywords(name: string, stack: Stack): number {
   const nameLower: string = name.toLowerCase();
@@ -15,7 +22,7 @@ export function keywords(name: string, stack: Stack): number {
     case "globals": return Globals;
     case "extensions": return Extensions;
     case "__includes": return Includes;
-    case "breed": return stack.context == 0 ? Breed : Reporter;
+    case "breed": return stack.context == Context.Top ? Breed : Reporter;
     case "directed-link-breed":
     case "undirected-link-breed": return Breed;
     case "to":
@@ -26,20 +33,22 @@ export function keywords(name: string, stack: Stack): number {
         case "keyword": return nameLower.endsWith("-own") ? Own : -1;
         case "constant": return Constant;
         case "variable":
-        case "reporter": return Reporter;
+        case "reporter": return stack.context == Context.Breed ? -1 : Reporter;
         case "command": return Command;
         default: return -1;
       }
   }
 };
 
-export const tracker = new ContextTracker<number>({
-  start: 0,
-  shift(depth: number, term: number, _, __): number {
+export const tracker = new ContextTracker<Context>({
+  start: Context.Top,
+  shift(context: Context, term: number, _, __): number {
     switch (term) {
-      case To: return depth + 1;
-      case End: return depth - 1;
-      default: return depth;
+      case Breed: return Context.Breed;
+      case CloseBracket: return context == Context.Breed ? Context.Top : context;
+      case To: return Context.Procedure;
+      case End: return Context.Top;
+      default: return context;
     }
   }
 });
