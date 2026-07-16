@@ -7,7 +7,7 @@ import {
 
 enum Context {
   Top,
-  Breed,
+  Declaration,
   Procedure
 }
 
@@ -33,7 +33,7 @@ export function keywords(name: string, stack: Stack): number {
         case "keyword": return nameLower.endsWith("-own") ? Own : -1;
         case "constant": return Constant;
         case "variable":
-        case "reporter": return stack.context == Context.Breed ? -1 : Reporter;
+        case "reporter": return stack.context == Context.Declaration ? -1 : Reporter;
         case "command": return Command;
         default: return -1;
       }
@@ -44,8 +44,14 @@ export const tracker = new ContextTracker<Context>({
   start: Context.Top,
   shift(context: Context, term: number, _, __): number {
     switch (term) {
-      case Breed: return Context.Breed;
-      case CloseBracket: return context == Context.Breed ? Context.Top : context;
+      case Import:
+      case Export:
+      case Globals:
+      case Extensions:
+      case Includes:
+      case Breed:
+      case Own: return Context.Declaration;
+      case CloseBracket: return context == Context.Declaration ? Context.Top : context;
       case To: return Context.Procedure;
       case End: return Context.Top;
       default: return context;
