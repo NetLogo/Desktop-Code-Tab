@@ -1,5 +1,6 @@
 import {
-  type Completion, CompletionContext, type CompletionResult, autocompletion, closeBracketsKeymap, completionKeymap
+  type Completion, CompletionContext, type CompletionResult, acceptCompletion, autocompletion, closeBracketsKeymap,
+  completionKeymap
 } from "@codemirror/autocomplete";
 import {
   cursorGroupBackward, cursorGroupForward, deleteGroupBackward, deleteGroupForward, history, indentLess, indentMore,
@@ -314,6 +315,7 @@ window.onload = () => {
       })),
       foldService.of(window.getFold),
       keymap.of([
+        { key: "Tab", run: acceptCompletion },
         ...closeBracketsKeymap,
         ...completionKeymap,
         { key: "Mod-z", run: window.nullHandler },
