@@ -44,7 +44,7 @@ expression {
   identNoDigit { @asciiLetter | "_" | "." | "?" | "=" | "*" | "!" | "<" | ">" | "#" | "+" | "/" | "%" | "$" | "^" | "'" | "&" | "-" | ":" }
   Identifier { identNoDigit (identNoDigit | @digit)* }
   Number { "-"? @digit+ ("." @digit+)? ("e" ("+" | "-") @digit+)? }
-  String { '"' (!["] | "\\\"")* '"' }
+  String { '"' (!["\n] | "\\\"")* ('"' | '\n' | @eof) }
   OpenBracket { "[" }
   CloseBracket { "]" }
   @precedence { Number, Identifier }
