@@ -29,11 +29,13 @@ export function keywords(name: string, stack: Stack): number {
     case "to-report": return To;
     case "end": return End;
     default:
-      switch (window.program.match(nameLower)?.type) {
+      const match = window.program.match(nameLower);
+
+      switch (match?.type) {
         case "keyword": return nameLower.endsWith("-own") ? Own : -1;
         case "constant": return Constant;
         case "variable":
-        case "reporter": return stack.context == Context.Declaration ? -1 : Reporter;
+        case "reporter": return (stack.context == Context.Declaration && !match.core) ? -1 : Reporter;
         case "command": return Command;
         default: return -1;
       }
