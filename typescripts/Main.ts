@@ -8,7 +8,7 @@ import {
 } from "@codemirror/commands";
 import {
   HighlightStyle, bracketMatching, foldGutter, LRLanguage, LanguageSupport, syntaxHighlighting, defaultHighlightStyle,
-  foldAll, foldEffect, foldService, unfoldAll, unfoldEffect
+  ensureSyntaxTree, foldAll, foldEffect, foldService, unfoldAll, unfoldEffect
 } from "@codemirror/language";
 import { highlightSelectionMatches } from "@codemirror/search";
 import { Compartment, EditorState, Line, SelectionRange, Text, Transaction } from "@codemirror/state";
@@ -21,6 +21,7 @@ import { styleTags, Tag, tags } from "@lezer/highlight";
 import { toggleComments } from "./comment.js";
 import { executeIndentations } from "./indent.js";
 import { parser } from "./netlogo.js";
+import { End, To } from "./netlogo.terms.js";
 
 interface ColorTheme {
   background: string;
@@ -810,12 +811,28 @@ window.setCompiledProgram = (keywords: string[], globals: string[], variables: s
 };
 
 window.autocomplete = (context: CompletionContext) => {
+  let inProc = false;
+
+  ensureSyntaxTree(window.view.state, context.pos)?.iterate({
+    from: 0,
+    to: context.pos,
+    enter(node) {
+      if (node.type.id == To) {
+        inProc = true;
+      } else if (node.type.id == End) {
+        inProc = false;
+      }
+    }
+  });
+
   const match = context.matchBefore(identRegex);
 
   if (context.explicit) {
     return {
       from: match?.from ?? context.pos,
-      options: window.program.matches(match?.text.toLowerCase() ?? "")
+      options: window.program.matches(match?.text.toLowerCase() ?? "").filter((completion) => {
+        return (completion.type == "keyword") != inProc;
+      })
     };
   }
 
@@ -835,7 +852,9 @@ window.autocomplete = (context: CompletionContext) => {
 
     return {
       from: match.from,
-      options: window.program.matches(match.text.toLowerCase())
+      options: window.program.matches(match.text.toLowerCase()).filter((completion) => {
+        return (completion.type == "keyword") != inProc;
+      })
     };
   }
 
