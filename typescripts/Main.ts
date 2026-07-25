@@ -191,6 +191,7 @@ declare global {
     getCaretPosition: () => number;
     getTokenAtCaret: () => string;
     setText: (text: string) => void;
+    refreshText: () => void;
     undo: () => void;
     redo: () => void;
     resetHistory: () => void;
@@ -443,6 +444,25 @@ window.setText = (text: string) => {
 
   window.resetHistory();
 };
+
+window.refreshText = () => {
+  window.overwriting = true;
+
+  window.view.dispatch({
+    changes: {
+      from: 0,
+      to: window.view.state.doc.length,
+      insert: window.view.state.doc.toString()
+    },
+    selection: {
+      anchor: 0,
+      head: 0
+    },
+    scrollIntoView: true
+  });
+
+  window.overwriting = false;
+}
 
 window.undo = () => {
   undo(window.view);
