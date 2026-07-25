@@ -46,24 +46,14 @@ interface FoldRange {
   to: number;
 }
 
-interface CompletionPlus extends Completion {
-  core: boolean;
-}
-
 class Trie {
-  readonly core: boolean;
-
   value?: string;
   type?: string;
   children: Map<string, Trie> = new Map<string, Trie>();
 
-  constructor(core: boolean) {
-    this.core = core;
-  }
-
   append(value: string, type: string, offset: number = 0): void {
     if (value[offset]) {
-      const child: Trie = this.children.get(value[offset]) ?? new Trie(this.core);
+      const child: Trie = this.children.get(value[offset]) ?? new Trie();
 
       child.append(value, type, offset + 1);
 
@@ -80,7 +70,7 @@ class Trie {
     });
   }
 
-  match(value: string, offset: number = 0): CompletionPlus | undefined {
+  match(value: string, offset: number = 0): Completion | undefined {
     if (value[offset]) {
       return this.children.get(value[offset])?.match(value, offset + 1);
     }
@@ -88,20 +78,19 @@ class Trie {
     if (this.value == value) {
       return {
         label: this.value,
-        type: this.type,
-        core: this.core
+        type: this.type
       };
     }
 
     return undefined;
   }
 
-  matches(value: string, offset: number = 0): CompletionPlus[] {
+  matches(value: string, offset: number = 0): Completion[] {
     if (value[offset]) {
       return this.children.get(value[offset])?.matches(value, offset + 1) ?? [];
     }
 
-    const entries: CompletionPlus[] = [];
+    const entries: Completion[] = [];
 
     this.children.forEach((child: Trie) => {
       entries.push(...child.matches("", offset + 1));
@@ -110,8 +99,7 @@ class Trie {
     if (this.value) {
       entries.push({
         label: this.value,
-        type: this.type,
-        core: this.core
+        type: this.type
       });
     }
 
@@ -122,13 +110,13 @@ class Trie {
 class Program {
   decls: string[] = [];
 
-  private core: Trie = new Trie(true);
-  private compiled: Trie = new Trie(false);
+  private core: Trie = new Trie();
+  private compiled: Trie = new Trie();
 
   setCore(keywords: string[], constants: string[], commands: string[], reporters: string[]) {
     this.decls = keywords.filter(value => !value.match("to|to-report|import|export"));
 
-    this.core = new Trie(true);
+    this.core = new Trie();
 
     this.core.appendAll(keywords, "keyword");
     this.core.appendAll(constants, "constant");
@@ -137,7 +125,7 @@ class Program {
   }
 
   setCompiled(keywords: string[], globals: string[], variables: string[], commands: string[], reporters: string[]) {
-    this.compiled = new Trie(false);
+    this.compiled = new Trie();
 
     this.compiled.appendAll(keywords, "keyword");
     this.compiled.appendAll(globals, "global");
@@ -146,11 +134,11 @@ class Program {
     this.compiled.appendAll(reporters, "reporter");
   }
 
-  match(value: string, offset: number = 0): CompletionPlus | undefined {
+  match(value: string, offset: number = 0): Completion | undefined {
     return this.core.match(value, offset) ?? this.compiled.match(value, offset);
   }
 
-  matches(value: string, offset: number = 0): CompletionPlus[] {
+  matches(value: string, offset: number = 0): Completion[] {
     return this.core.matches(value, offset).concat(this.compiled.matches(value, offset));
   }
 }
@@ -312,12 +300,15 @@ window.onload = () => {
               Extensions: tags.keyword,
               Includes: tags.keyword,
               To: tags.keyword,
+              ToReport: tags.keyword,
               End: tags.keyword,
               Identifier: tags.name,
               Number: tags.literal,
               String: tags.literal,
               Command: commandTag,
               Reporter: reporterTag,
+              AlwaysCommand: commandTag,
+              AlwaysReporter: reporterTag,
               Var: reporterTag,
               Constant: tags.literal
             })

@@ -10,6 +10,7 @@
   Includes,
   Breed,
   To,
+  ToReport,
   End,
   Own,
   Command,
@@ -25,12 +26,13 @@ declaration {
   Import Identifier (As Identifier)? |
   Import OpenBracket (Identifier | Identifier As Identifier)* CloseBracket From Identifier |
   Export OpenBracket Identifier* CloseBracket |
-  (Globals | Own | Extensions) OpenBracket Identifier* CloseBracket |
+  (Globals | Own) OpenBracket AlwaysReporter* CloseBracket |
+  Extensions OpenBracket Identifier* CloseBracket |
   Includes OpenBracket String* CloseBracket |
-  Breed OpenBracket Identifier Identifier CloseBracket
+  Breed OpenBracket AlwaysReporter AlwaysReporter CloseBracket
 }
 
-procedure { To Identifier (OpenBracket Identifier+ CloseBracket)? expression* End }
+procedure { (To AlwaysCommand | ToReport AlwaysReporter) (OpenBracket Identifier+ CloseBracket)? expression* End }
 
 expression {
   "(" expression ")" |
@@ -43,6 +45,8 @@ expression {
   Comment { ";" ![\n]* }
   identNoDigit { @asciiLetter | "_" | "." | "?" | "=" | "*" | "!" | "<" | ">" | "#" | "+" | "/" | "%" | "$" | "^" | "'" | "&" | "-" | ":" }
   Identifier { identNoDigit (identNoDigit | @digit)* }
+  AlwaysCommand { Identifier }
+  AlwaysReporter { Identifier }
   Number { "-"? @digit+ ("." @digit+)? ("e" ("+" | "-") @digit+)? }
   String { '"' (!["\n] | "\\\"")* ('"' | '\n' | @eof) }
   OpenBracket { "[" }
