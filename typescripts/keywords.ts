@@ -1,7 +1,8 @@
 import { ContextTracker, type Stack } from "@lezer/lr";
 
 import {
-  As, Globals, Export, Extensions, From, Import, Includes, Breed, To, ToReport, End, Own, Command, Reporter, Constant
+  As, Globals, Export, Extensions, From, Import, Includes, Breed, To, ToReport, End, Own, Command, Reporter, Constant,
+  Var
 } from "./netlogo.terms.js";
 
 export function keywords(name: string, stack: Stack): number {
@@ -25,7 +26,8 @@ export function keywords(name: string, stack: Stack): number {
       switch (window.program.match(nameLower)?.type) {
         case "keyword": return nameLower.endsWith("-own") ? Own : -1;
         case "constant": return Constant;
-        case "variable":
+        case "global":
+        case "variable": return Var;
         case "reporter": return Reporter;
         case "command": return Command;
         default: return -1;

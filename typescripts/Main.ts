@@ -39,6 +39,7 @@ interface ColorTheme {
   keyword: string;
   command: string;
   reporter: string;
+  variable: string;
 }
 
 interface FoldRange {
@@ -147,6 +148,7 @@ const identRegex: RegExp = /[\w\-:.?=*!<>#+/%$\^'&]+/;
 
 const commandTag: Tag = Tag.define("command", tags.name);
 const reporterTag: Tag = Tag.define("reporter", tags.name);
+const variableTag: Tag = Tag.define("variable", tags.name);
 
 declare global {
   interface Window {
@@ -263,6 +265,7 @@ window.onload = () => {
     keyword: "",
     command: "",
     reporter: "",
+    variable: ""
   };
 
   window.view = new EditorView({
@@ -307,9 +310,10 @@ window.onload = () => {
               String: tags.literal,
               Command: commandTag,
               Reporter: reporterTag,
+              Var: variableTag,
               AlwaysCommand: commandTag,
               AlwaysReporter: reporterTag,
-              Var: reporterTag,
+              AlwaysVar: variableTag,
               Constant: tags.literal
             })
           ]
@@ -949,7 +953,8 @@ window.syncTheme = (theme: ColorTheme) => {
         { tag: tags.keyword, color: theme.keyword, fontWeight: "bold" },
         { tag: tags.literal, color: theme.constant },
         { tag: commandTag, color: theme.command },
-        { tag: reporterTag, color: theme.reporter }
+        { tag: reporterTag, color: theme.reporter },
+        { tag: variableTag, color: theme.variable },
       ])))
     ]
   });

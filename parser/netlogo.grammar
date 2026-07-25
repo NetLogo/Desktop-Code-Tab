@@ -15,6 +15,7 @@
   Own,
   Command,
   Reporter,
+  Var,
   Constant
 }
 
@@ -26,7 +27,7 @@ declaration {
   Import Identifier (As Identifier)? |
   Import OpenBracket (Identifier | Identifier As Identifier)* CloseBracket From Identifier |
   Export OpenBracket Identifier* CloseBracket |
-  (Globals | Own) OpenBracket AlwaysReporter* CloseBracket |
+  (Globals | Own) OpenBracket AlwaysVar* CloseBracket |
   Extensions OpenBracket Identifier* CloseBracket |
   Includes OpenBracket String* CloseBracket |
   Breed OpenBracket AlwaysReporter AlwaysReporter CloseBracket
@@ -47,6 +48,7 @@ expression {
   Identifier { identNoDigit (identNoDigit | @digit)* }
   AlwaysCommand { Identifier }
   AlwaysReporter { Identifier }
+  AlwaysVar { Identifier }
   Number { "-"? @digit+ ("." @digit+)? ("e" ("+" | "-") @digit+)? }
   String { '"' (!["\n] | "\\\"")* ('"' | '\n' | @eof) }
   OpenBracket { "[" }
