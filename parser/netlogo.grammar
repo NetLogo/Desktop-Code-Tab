@@ -19,24 +19,35 @@
 
 @skip { space | Comment }
 
+@detectDelim
+
 @top Program { declaration* procedure* }
 
 declaration {
   Import Identifier (As Identifier)? |
-  Import OpenBracket (Identifier | Identifier As Identifier)* CloseBracket From Identifier |
-  Export OpenBracket Identifier* CloseBracket |
-  (Globals | Own | Extensions) OpenBracket Identifier* CloseBracket |
-  Includes OpenBracket String* CloseBracket |
-  Breed OpenBracket Identifier Identifier CloseBracket
+  Import ImportBlock From Identifier |
+  (Export | Globals | Own | Extensions) IdentBlock |
+  Includes StringBlock |
+  Breed BreedBlock
 }
 
-procedure { To Identifier (OpenBracket Identifier+ CloseBracket)? expression* End }
+ImportBlock { OpenBracket (Identifier | Identifier As Identifier)* CloseBracket }
+BreedBlock { OpenBracket Identifier Identifier CloseBracket }
+IdentBlock { OpenBracket Identifier* CloseBracket }
+StringBlock { OpenBracket String* CloseBracket }
+
+procedure { To Identifier InputBlock? expression* End }
+
+InputBlock { OpenBracket Identifier+ CloseBracket }
 
 expression {
-  "(" expression ")" |
-  OpenBracket expression CloseBracket |
+  ParenExpression |
+  BracketExpression |
   (Command | Reporter) (Identifier | Number | String | Constant)*
 }
+
+ParenExpression { OpenParen expression CloseParen }
+BracketExpression { OpenBracket expression* CloseBracket }
 
 @tokens {
   space { @whitespace+ }
@@ -45,6 +56,8 @@ expression {
   Identifier { identNoDigit (identNoDigit | @digit)* }
   Number { "-"? @digit+ ("." @digit+)? ("e" ("+" | "-") @digit+)? }
   String { '"' (!["\n] | "\\\"")* ('"' | '\n' | @eof) }
+  OpenParen { "(" }
+  CloseParen { ")" }
   OpenBracket { "[" }
   CloseBracket { "]" }
   @precedence { Number, Identifier }
