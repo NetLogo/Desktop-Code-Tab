@@ -864,9 +864,11 @@ window.autocomplete = (context: CompletionContext) => {
     const procMatch = line.match(`^\\s*(to|to-report)\\s+(${identRegex}\\s*\\[)?`);
     const modMatch = line.match(/^\s*(import|export)\s+\[?/);
     const declMatch = line.match(`^\\s*(${window.program.decls.join("|")})\\s*\\[`);
+    const letMatch = line.match(/^\s*let\s+/);
     const semiMatch = line.match(/^.*;/);
 
-    if (procMatch || modMatch || declMatch || (semiMatch && (semiMatch[0].match(/"/g)?.length ?? 0) % 2 == 0)) {
+    if (procMatch || modMatch || declMatch || letMatch ||
+        (semiMatch && (semiMatch[0].match(/"/g)?.length ?? 0) % 2 == 0)) {
       return null;
     }
 
