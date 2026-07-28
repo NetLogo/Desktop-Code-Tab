@@ -12,7 +12,6 @@
     "node": "~24.13.0"
   },
   "scripts": {
-    "prepare": "lezer-generator parser/netlogo.grammar --typeScript -o typescripts/netlogo.ts",
     "build": "npx tsc"
   },
   "dependencies": {

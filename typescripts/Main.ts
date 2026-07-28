@@ -7,7 +7,7 @@ import {
   moveLineDown, moveLineUp, redo, selectGroupBackward, selectGroupForward, undo
 } from "@codemirror/commands";
 import {
-  HighlightStyle, bracketMatching, foldGutter, LRLanguage, LanguageSupport, syntaxHighlighting, defaultHighlightStyle,
+  HighlightStyle, bracketMatching, foldGutter, LanguageSupport, syntaxHighlighting, defaultHighlightStyle,
   ensureSyntaxTree, foldAll, foldEffect, foldService, unfoldAll, unfoldEffect
 } from "@codemirror/language";
 import { highlightSelectionMatches } from "@codemirror/search";
@@ -16,12 +16,11 @@ import {
   EditorView, keymap, drawSelection, highlightActiveLine, rectangularSelection, crosshairCursor, lineNumbers,
   highlightActiveLineGutter, ViewUpdate
 } from "@codemirror/view";
-import { styleTags, Tag, tags } from "@lezer/highlight";
+import { tags } from "@lezer/highlight";
 
 import { toggleComments } from "./comment.js";
 import { executeIndentations } from "./indent.js";
-import { parser } from "./netlogo.js";
-import { End, To } from "./netlogo.terms.js";
+import { commandTag, reporterTag, NLLanguage } from "./language.js";
 
 interface ColorTheme {
   background: string;
@@ -156,9 +155,6 @@ class Program {
 }
 
 const identRegex: RegExp = /[\w\-:.?=*!<>#+/%$\^'&]+/;
-
-const commandTag: Tag = Tag.define("command", tags.name);
-const reporterTag: Tag = Tag.define("reporter", tags.name);
 
 declare global {
   interface Window {
@@ -297,35 +293,8 @@ window.onload = () => {
         icons: false,
         optionClass: (completion: Completion): string => `cm-completionLabel-${completion.type}`
       }),
-      new LanguageSupport(LRLanguage.define({
-        parser: parser.configure({
-          props: [
-            styleTags({
-              Comment: tags.comment,
-              Import: tags.keyword,
-              Export: tags.keyword,
-              From: tags.keyword,
-              As: tags.keyword,
-              Globals: tags.keyword,
-              Breed: tags.keyword,
-              Own: tags.keyword,
-              Extensions: tags.keyword,
-              Includes: tags.keyword,
-              To: tags.keyword,
-              End: tags.keyword,
-              Identifier: tags.name,
-              Number: tags.literal,
-              String: tags.literal,
-              Command: commandTag,
-              Reporter: reporterTag,
-              Var: reporterTag,
-              Constant: tags.literal
-            })
-          ]
-        }),
-        languageData: {
-          "autocomplete": window.autocomplete
-        }
+      new LanguageSupport(NLLanguage, NLLanguage.data.of({
+        autocomplete: window.autocomplete
       })),
       foldService.of(window.getFold),
       keymap.of([
@@ -837,9 +806,9 @@ window.autocomplete = (context: CompletionContext) => {
     from: 0,
     to: context.pos,
     enter(node) {
-      if (node.type.id == To) {
+      if (node.type.name == "to") {
         inProc = true;
-      } else if (node.type.id == End) {
+      } else if (node.type.name == "end") {
         inProc = false;
       }
     }
