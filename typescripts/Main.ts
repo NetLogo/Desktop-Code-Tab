@@ -964,6 +964,8 @@ window.syncTheme = (theme: ColorTheme) => {
       ])))
     ]
   });
+
+  window.setNormalSelection();
 };
 
 window.nullHandler = (_: EditorView) => {
