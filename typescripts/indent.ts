@@ -127,7 +127,7 @@ function getUpdate(view: EditorView): IndentUpdate {
               indents.push((indentLevels[0] ?? 2) - 2);
             }
           } else {
-            indents.push(0);
+            indents.push(lastIndent);
           }
 
           break;
