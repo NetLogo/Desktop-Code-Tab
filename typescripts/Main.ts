@@ -866,9 +866,11 @@ window.autocomplete = (context: CompletionContext) => {
     const declMatch = line.match(`^\\s*(${window.program.decls.join("|")})\\s*\\[`);
     const letMatch = line.match(/^\s*let\s+/);
     const semiMatch = line.match(/^.*;/);
+    const quoteMatch = line.match(/^.*"/);
 
     if (procMatch || modMatch || declMatch || letMatch ||
-        (semiMatch && (semiMatch[0].match(/"/g)?.length ?? 0) % 2 == 0)) {
+        (semiMatch && (semiMatch[0].match(/(?<!\\)"/g)?.length ?? 0) % 2 == 0) ||
+        (quoteMatch && (quoteMatch[0].match(/(?<!\\)"/g)?.length ?? 0) % 2 != 0)) {
       return null;
     }
 
