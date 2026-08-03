@@ -278,4 +278,6 @@ export function executeIndentations(view: EditorView) {
       }
     });
   }
+
+  window.setHighlight(view.state.selection.main.empty);
 };
