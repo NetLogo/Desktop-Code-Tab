@@ -1,13 +1,10 @@
-import {
-  type Completion, CompletionContext, type CompletionResult, acceptCompletion, autocompletion, completionKeymap
-} from "@codemirror/autocomplete";
+import { type Completion, acceptCompletion, autocompletion, completionKeymap } from "@codemirror/autocomplete";
 import {
   cursorGroupBackward, cursorGroupForward, deleteGroupBackward, deleteGroupForward, history, indentLess, indentMore,
   moveLineDown, moveLineUp, redo, selectGroupBackward, selectGroupForward, undo
 } from "@codemirror/commands";
 import {
-  HighlightStyle, bracketMatching, foldGutter, LRLanguage, LanguageSupport, syntaxHighlighting, defaultHighlightStyle,
-  ensureSyntaxTree, foldAll, foldEffect, foldService, unfoldAll, unfoldEffect
+  bracketMatching, foldGutter, foldAll, foldEffect, foldService, unfoldAll, unfoldEffect
 } from "@codemirror/language";
 import { highlightSelectionMatches } from "@codemirror/search";
 import { Compartment, EditorState, Line, SelectionRange, Text, Transaction } from "@codemirror/state";
@@ -15,12 +12,10 @@ import {
   EditorView, keymap, drawSelection, highlightActiveLine, rectangularSelection, crosshairCursor, lineNumbers,
   highlightActiveLineGutter, ViewUpdate
 } from "@codemirror/view";
-import { styleTags, Tag, tags } from "@lezer/highlight";
 
 import { toggleComments } from "./comment.js";
 import { executeIndentations } from "./indent.js";
-import { parser } from "./netlogo.js";
-import { End, To } from "./netlogo.terms.js";
+import { LanguageServer } from "./language.js";
 
 interface ColorTheme {
   background: string;
@@ -154,11 +149,6 @@ class Program {
   }
 }
 
-const identRegex: RegExp = /[\w\-:.?=*!<>#+/%$\^'&]+/;
-
-const commandTag: Tag = Tag.define("command", tags.name);
-const reporterTag: Tag = Tag.define("reporter", tags.name);
-
 declare global {
   interface Window {
     view: EditorView;
@@ -176,6 +166,8 @@ declare global {
     program: Program;
 
     currentTheme: ColorTheme;
+
+    languageServer: LanguageServer;
 
     overwriting: boolean;
     highlightActive: boolean;
@@ -228,7 +220,6 @@ declare global {
     setCoreProgram: (keywords: string[], constants: string[], commands: string[], reporters: string[]) => void;
     setCompiledProgram: (keywords: string[], globals: string[], variables: string[], commands: string[],
                          reporters: string[]) => void;
-    autocomplete: (context: CompletionContext) => CompletionResult | null;
     doScroll: (mouseX: number, mouseY: number, scrollX: number, scrollY: number) => void;
     syncTheme: (theme: ColorTheme) => void;
     nullHandler: (view: EditorView) => boolean;
@@ -276,6 +267,10 @@ window.onload = () => {
     reporter: "",
   };
 
+  window.languageServer = new LanguageServer({
+    port: 5588
+  });
+
   window.view = new EditorView({
     parent: document.body,
     extensions: [
@@ -296,36 +291,7 @@ window.onload = () => {
         icons: false,
         optionClass: (completion: Completion): string => `cm-completionLabel-${completion.type}`
       }),
-      new LanguageSupport(LRLanguage.define({
-        parser: parser.configure({
-          props: [
-            styleTags({
-              Comment: tags.comment,
-              Import: tags.keyword,
-              Export: tags.keyword,
-              From: tags.keyword,
-              As: tags.keyword,
-              Globals: tags.keyword,
-              Breed: tags.keyword,
-              Own: tags.keyword,
-              Extensions: tags.keyword,
-              Includes: tags.keyword,
-              To: tags.keyword,
-              End: tags.keyword,
-              Identifier: tags.name,
-              Number: tags.literal,
-              String: tags.literal,
-              Command: commandTag,
-              Reporter: reporterTag,
-              Var: reporterTag,
-              Constant: tags.literal
-            })
-          ]
-        }),
-        languageData: {
-          "autocomplete": window.autocomplete
-        }
-      })),
+      window.languageServer.createExtension(),
       foldService.of(window.getFold),
       keymap.of([
         { key: "Tab", run: acceptCompletion },
@@ -372,7 +338,7 @@ window.onload = () => {
       window.themeConfig.of(EditorView.theme({})),
       window.selectionConfig.of(EditorView.theme({})),
       window.highlightConfig.of(EditorView.theme({})),
-      window.syntaxConfig.of(syntaxHighlighting(defaultHighlightStyle)),
+      window.syntaxConfig.of(EditorView.theme({})),
       window.historyConfig.of(history()),
       window.fontConfig.of(EditorView.theme({})),
       window.editableConfig.of(EditorView.editable.of(true)),
@@ -550,7 +516,7 @@ window.indent = (view: EditorView) => {
   }
 
   if (window.smartIndent) {
-    executeIndentations(view);
+    executeIndentations(view, window.languageServer);
   } else {
     indentMore(view);
   }
@@ -564,7 +530,7 @@ window.unindent = (view: EditorView) => {
   }
 
   if (window.smartIndent) {
-    executeIndentations(view);
+    executeIndentations(view, window.languageServer);
   } else {
     indentLess(view);
   }
@@ -580,7 +546,7 @@ window.handleEnter = (view: EditorView) => {
   view.dispatch(view.state.replaceSelection("\n"), { scrollIntoView: true });
 
   if (window.smartIndent) {
-    executeIndentations(view);
+    executeIndentations(view, window.languageServer);
   }
 
   return true;
@@ -593,7 +559,7 @@ window.handleOpenBracket = (view: EditorView) => {
 
   view.dispatch(view.state.replaceSelection("["));
 
-  executeIndentations(view);
+  executeIndentations(view, window.languageServer);
 
   return true;
 };
@@ -605,7 +571,7 @@ window.handleCloseBracket = (view: EditorView) => {
 
   view.dispatch(view.state.replaceSelection("]"));
 
-  executeIndentations(view);
+  executeIndentations(view, window.languageServer);
 
   return true;
 };
@@ -620,7 +586,7 @@ window.handleEnd = (view: EditorView, char: string) => {
   if (newDoc.lineAt(view.state.selection.main.head).text.trimStart().toLowerCase().startsWith("end")) {
     view.dispatch(view.state.replaceSelection(char));
 
-    executeIndentations(view);
+    executeIndentations(view, window.languageServer);
 
     return true;
   }
@@ -830,61 +796,6 @@ window.setCompiledProgram = (keywords: string[], globals: string[], variables: s
   window.program.setCompiled(keywords, globals, variables, commands, reporters);
 };
 
-window.autocomplete = (context: CompletionContext) => {
-  let inProc = false;
-
-  ensureSyntaxTree(window.view.state, context.pos)?.iterate({
-    from: 0,
-    to: context.pos,
-    enter(node) {
-      if (node.type.id == To) {
-        inProc = true;
-      } else if (node.type.id == End) {
-        inProc = false;
-      }
-    }
-  });
-
-  const match = context.matchBefore(identRegex);
-
-  if (context.explicit) {
-    return {
-      from: match?.from ?? context.pos,
-      options: window.program.matches(match?.text.toLowerCase() ?? "").filter((completion) => {
-        return (completion.type == "keyword") != inProc;
-      })
-    };
-  }
-
-  const doc: Text = context.state.doc;
-
-  if (match && window.completeOnType && doc.sliceString(match.from - 1, match.from) != '"') {
-    const line: string = doc.sliceString(doc.lineAt(match.from).from, match.from).toLowerCase();
-
-    const procMatch = line.match(`^\\s*(to|to-report)\\s+(${identRegex}\\s*\\[)?`);
-    const modMatch = line.match(/^\s*(import|export)\s+\[?/);
-    const declMatch = line.match(`^\\s*(${window.program.decls.join("|")})\\s*\\[`);
-    const letMatch = line.match(/^\s*let\s+$/);
-    const semiMatch = line.match(/^.*;/);
-    const quoteMatch = line.match(/^.*"/);
-
-    if (procMatch || modMatch || declMatch || letMatch ||
-        (semiMatch && (semiMatch[0].match(/(?<!\\)"/g)?.length ?? 0) % 2 == 0) ||
-        (quoteMatch && (quoteMatch[0].match(/(?<!\\)"/g)?.length ?? 0) % 2 != 0)) {
-      return null;
-    }
-
-    return {
-      from: match.from,
-      options: window.program.matches(match.text.toLowerCase()).filter((completion) => {
-        return (completion.type == "keyword") != inProc;
-      })
-    };
-  }
-
-  return null;
-};
-
 window.doScroll = (mouseX: number, mouseY: number, scrollX: number, scrollY: number) => {
   const popup: Element | null = document.querySelector(".cm-tooltip-autocomplete ul");
 
@@ -956,14 +867,27 @@ window.syncTheme = (theme: ColorTheme) => {
           backgroundColor: theme.lineHighlight
         }
       })),
-      window.syntaxConfig.reconfigure(syntaxHighlighting(HighlightStyle.define([
-        { tag: tags.name, color: theme.default },
-        { tag: tags.comment, color: theme.comment },
-        { tag: tags.keyword, color: theme.keyword, fontWeight: "bold" },
-        { tag: tags.literal, color: theme.constant },
-        { tag: commandTag, color: theme.command },
-        { tag: reporterTag, color: theme.reporter }
-      ])))
+      window.syntaxConfig.reconfigure(EditorView.theme({
+        ".nl-comment": {
+          color: theme.comment
+        },
+        ".nl-keyword": {
+          color: theme.keyword,
+          fontWeight: "bold"
+        },
+        ".nl-literal": {
+          color: theme.constant
+        },
+        ".nl-command": {
+          color: theme.command
+        },
+        ".nl-reporter": {
+          color: theme.reporter
+        },
+        ".nl-default": {
+          color: theme.default
+        }
+      }))
     ]
   });
 

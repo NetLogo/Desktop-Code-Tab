@@ -1,22 +1,18 @@
 import { type ChangeSpec, Line, SelectionRange, Text } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { type SyntaxNodeRef, Tree } from "@lezer/common";
 
-import { parser } from "./netlogo.js";
-import {
-  Breed, CloseBracket, Command, End, Extensions, Globals, Includes, OpenBracket, Own, To
-} from "./netlogo.terms.js";
+import { LanguageServer, type TokenSpec, TokenType } from "./language.js";
 
 class TokenizedLine {
   readonly line: Line;
-  readonly tokens: SyntaxNodeRef[];
+  readonly tokens: TokenSpec[];
   readonly leading: number;
   readonly bracketDelta: number;
   readonly bracketsClosed: number;
 
-  constructor(line: Line, tokens: SyntaxNodeRef[]) {
+  constructor(line: Line, tokens: TokenSpec[]) {
     this.line = line;
-    this.tokens = tokens.filter((node: SyntaxNodeRef) => !node.type.isTop && !node.type.isError);
+    this.tokens = tokens;
     this.bracketDelta = 0;
     this.bracketsClosed = 0;
 
@@ -29,13 +25,13 @@ class TokenizedLine {
     }
 
     for (const token of this.tokens) {
-      switch (token.type.id) {
-        case OpenBracket:
+      switch (token.type) {
+        case TokenType.OpenBracket:
           this.bracketDelta++;
 
           break;
 
-        case CloseBracket:
+        case TokenType.CloseBracket:
           this.bracketDelta--;
           this.bracketsClosed = Math.max(this.bracketsClosed, -this.bracketDelta);
 
@@ -55,7 +51,7 @@ class IndentUpdate {
   }
 }
 
-function getUpdate(view: EditorView): IndentUpdate {
+function getUpdate(view: EditorView, server: LanguageServer): IndentUpdate {
   const doc: Text = view.state.doc;
 
   let caretShift = 0;
@@ -65,38 +61,10 @@ function getUpdate(view: EditorView): IndentUpdate {
     const endLine: Line = doc.lineAt(range.to);
     const caretLine: Line = doc.lineAt(range.head);
 
-    const tree: Tree = parser.parse(doc.sliceString(0, endLine.to));
-
     const parsedLines: TokenizedLine[] = [];
 
-    let currentLine: Line = doc.lineAt(range.from);
-    let currentTokens: SyntaxNodeRef[] = [];
-
-    tree.iterate({
-      enter: (node: SyntaxNodeRef) => {
-        let line: Line = doc.lineAt(node.from);
-
-        if (line.number == currentLine.number) {
-          currentTokens.push(node.node);
-        } else {
-          if (currentTokens.length > 0) {
-            parsedLines.push(new TokenizedLine(currentLine, currentTokens));
-          }
-
-          currentLine = line;
-          currentTokens = [ node.node ];
-        }
-
-        return true;
-      }
-    });
-
-    if (currentTokens.length > 0) {
-      parsedLines.push(new TokenizedLine(currentLine, currentTokens));
-    }
-
-    if ((parsedLines[parsedLines.length - 1]?.line.number ?? 0) < endLine.number) {
-      parsedLines.push(new TokenizedLine(endLine, []));
+    for (let i = 1; i <= endLine.number; i++) {
+      parsedLines.push(new TokenizedLine(doc.line(i), server.requestLine(doc.line(i))));
     }
 
     let indentLevels: number[] = [];
@@ -105,19 +73,13 @@ function getUpdate(view: EditorView): IndentUpdate {
     for (const line of parsedLines) {
       const lastIndent: number = indentLevels[indentLevels.length - 1] ?? 0;
 
-      switch (line.tokens[0]?.type.id ?? -1) {
-        case Globals:
-        case Breed:
-        case Own:
-        case Extensions:
-        case Includes:
-        case To:
-        case End:
+      switch (line.tokens[0]?.type) {
+        case TokenType.Keyword:
           indents.push(0);
 
           break;
 
-        case CloseBracket:
+        case TokenType.CloseBracket:
           if (line.bracketDelta == 0) {
             indents.push(Math.max(lastIndent - 2, 0));
           } else if (line.bracketDelta < 0) {
@@ -132,9 +94,9 @@ function getUpdate(view: EditorView): IndentUpdate {
 
           break;
 
-        case OpenBracket:
+        case TokenType.OpenBracket:
           if (line.leading > lastIndent) {
-            const command: boolean = parsedLines[parsedLines.length - 1]?.tokens[0]?.type.id == Command;
+            const command: boolean = parsedLines[parsedLines.length - 1]?.tokens[0]?.type == TokenType.Command;
             const delta: boolean = parsedLines[parsedLines.length - 1]?.bracketDelta == 0;
 
             if (command && delta) {
@@ -158,19 +120,11 @@ function getUpdate(view: EditorView): IndentUpdate {
           indents.push(lastIndent);
       }
 
-      switch (line.tokens[0]?.type.id) {
-        case To:
-          indentLevels = [ 2 ];
-
-          break;
-
-        case Globals:
-        case Breed:
-        case Own:
-        case Extensions:
-        case Includes:
-        case End:
-          if (line.bracketDelta == 0) {
+      switch (line.tokens[0]?.type) {
+        case TokenType.Keyword:
+          if (/to(-report)?/i.test(doc.sliceString(line.line.from + line.tokens[0].from, line.line.from + line.tokens[0].to))) {
+            indentLevels = [ 2 ];
+          } else if (line.bracketDelta == 0) {
             indentLevels = [];
           } else if (line.bracketDelta > 0) {
             for (let i = 0; i < line.bracketDelta; i++) {
@@ -184,12 +138,12 @@ function getUpdate(view: EditorView): IndentUpdate {
 
           break;
 
-        case OpenBracket:
+        case TokenType.OpenBracket:
           if (line.bracketDelta > 0) {
             let indent = lastIndent;
 
             if (line.leading > lastIndent) {
-              const command: boolean = parsedLines[parsedLines.length - 1]?.tokens[0]?.type.id == Command;
+              const command: boolean = parsedLines[parsedLines.length - 1]?.tokens[0]?.type == TokenType.Command;
               const delta: boolean = parsedLines[parsedLines.length - 1]?.bracketDelta == 0;
 
               if (command && delta) {
@@ -260,8 +214,8 @@ function getUpdate(view: EditorView): IndentUpdate {
   return new IndentUpdate(changes, caretShift);
 }
 
-export function executeIndentations(view: EditorView) {
-  const update: IndentUpdate = getUpdate(view);
+export function executeIndentations(view: EditorView, server: LanguageServer) {
+  const update: IndentUpdate = getUpdate(view, server);
 
   if (update.caretShift == 0) {
     view.dispatch({
