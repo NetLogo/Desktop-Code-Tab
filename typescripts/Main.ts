@@ -464,10 +464,14 @@ window.refreshText = () => {
 
 window.undo = () => {
   undo(window.view);
+
+  window.setHighlight(window.view.state.selection.main.empty);
 };
 
 window.redo = () => {
   redo(window.view);
+
+  window.setHighlight(window.view.state.selection.main.empty);
 };
 
 window.resetHistory = () => {
