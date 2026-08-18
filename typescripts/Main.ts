@@ -323,6 +323,7 @@ window.onload = () => {
           ]
         }),
         languageData: {
+          "wordChars": "_.?=*!<>#+/%$^'&-",
           "autocomplete": window.autocomplete
         }
       })),
