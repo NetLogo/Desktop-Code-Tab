@@ -885,7 +885,7 @@ window.doScroll = (mouseX: number, mouseY: number, scrollX: number, scrollY: num
   if (popup?.contains(document.elementFromPoint(mouseX, mouseY))) {
     popup.scrollBy(scrollX, scrollY);
   } else {
-    window.scrollBy(scrollX, scrollY);
+    window.view.scrollDOM.scrollBy(scrollX, scrollY);
   }
 }
 
@@ -903,6 +903,9 @@ window.syncTheme = (theme: ColorTheme) => {
   window.view.dispatch({
     effects: [
       window.themeConfig.reconfigure(EditorView.theme({
+        "&": {
+          height: "100%"
+        },
         "&.cm-focused": {
           outline: "none"
         },
@@ -911,7 +914,6 @@ window.syncTheme = (theme: ColorTheme) => {
           color: theme.default
         },
         ".cm-gutters": {
-          height: "100vh",
           borderRightColor: theme.gutterBorder
         },
         "& .cm-cursor, & .cm-dropCursor": {
