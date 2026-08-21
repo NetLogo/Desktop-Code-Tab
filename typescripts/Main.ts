@@ -521,10 +521,14 @@ window.paste = () => {
 
 window.select = (start: number, end: number) => {
   const length: number = window.view.state.doc.length;
+  const anchor: number = Math.min(start, length);
 
   window.view.dispatch({
-    selection: { anchor: Math.min(start, length), head: Math.min(end, length) },
-    scrollIntoView: true
+    selection: { anchor: anchor, head: Math.min(end, length) },
+    effects: EditorView.scrollIntoView(anchor, {
+      x: "center",
+      y: "center"
+    })
   });
 };
 
