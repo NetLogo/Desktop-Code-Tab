@@ -50,6 +50,11 @@ interface CompletionPlus extends Completion {
   core: boolean;
 }
 
+interface BasicLine {
+  number: number;
+  text: string;
+}
+
 class Trie {
   readonly core: boolean;
 
@@ -188,7 +193,10 @@ declare global {
     getSelectionEnd: () => number;
     getSelectedText: () => string;
     getCaretPosition: () => number;
+    getCaretX: () => number;
+    getCaretY: () => number;
     getTokenAtCaret: () => string;
+    getLinesForOffsets: (offsets: number[]) => BasicLine[];
     setText: (text: string) => void;
     refreshText: () => void;
     undo: () => void;
@@ -336,6 +344,7 @@ window.onload = () => {
         { key: "Mod-x", run: window.nullHandler },
         { key: "Mod-v", run: window.nullHandler },
         { key: "Mod-m", run: window.nullHandler },
+        { key: "Mod-u", run: window.nullHandler },
         { key: "Mod-Backspace", mac: "Alt-Backspace", run: deleteGroupBackward },
         { key: "Mod-Delete", mac: "Alt-Delete", run: deleteGroupForward },
         { key: "Mod-ArrowLeft", mac: "Alt-ArrowLeft", run: cursorGroupBackward, shift: selectGroupBackward },
@@ -407,6 +416,14 @@ window.getCaretPosition = () => {
   return window.view.state.selection.main.head;
 };
 
+window.getCaretX = () => {
+  return Math.round(window.view.coordsAtPos(window.view.state.selection.main.head)?.left ?? 0);
+};
+
+window.getCaretY = () => {
+  return Math.round(window.view.coordsAtPos(window.view.state.selection.main.head)?.bottom ?? 0);
+};
+
 window.getTokenAtCaret = () => {
   const caret: number = window.view.state.selection.main.head;
   const line: Line = window.view.state.doc.lineAt(caret);
@@ -426,6 +443,12 @@ window.getTokenAtCaret = () => {
   }
 
   return text.slice(start, end);
+};
+
+window.getLinesForOffsets = (offsets: number[]) => {
+  const doc: Text = window.view.state.doc;
+
+  return offsets.map(offset => doc.lineAt(offset));
 };
 
 window.setText = (text: string) => {
