@@ -18,7 +18,6 @@ import {
 import { styleTags, Tag, tags } from "@lezer/highlight";
 
 import { toggleComments } from "./comment.js";
-import { clearErrors, errorExtension, markError } from "./errors.js";
 import { executeIndentations } from "./indent.js";
 import { parser } from "./netlogo.js";
 import { End, To } from "./netlogo.terms.js";
@@ -170,6 +169,7 @@ declare global {
     view: EditorView;
 
     themeConfig: Compartment;
+    selectionConfig: Compartment;
     highlightConfig: Compartment;
     syntaxConfig: Compartment;
     historyConfig: Compartment;
@@ -206,8 +206,6 @@ declare global {
     cut: () => void;
     paste: () => void;
     select: (start: number, end: number) => void;
-    selectNormal: () => void;
-    selectError: (start: number, end: number) => void;
     selectAll: () => void;
     replaceSelection: (text: string) => void;
     shiftLeft: () => void;
@@ -226,6 +224,8 @@ declare global {
     setLineNumbers: (visible: boolean) => void;
     setCompleteOnType: (enabled: boolean) => void;
     setFont: (family: string, size: number) => void;
+    setNormalSelection: () => void;
+    setErrorSelection: () => void;
     setHighlight: (active: boolean) => void;
     getFold: (state: EditorState, start: number, end: number) => FoldRange | null;
     getFolds: (state: EditorState) => FoldRange[];
@@ -255,6 +255,7 @@ declare global {
 
 window.onload = () => {
   window.themeConfig = new Compartment();
+  window.selectionConfig = new Compartment();
   window.highlightConfig = new Compartment();
   window.syntaxConfig = new Compartment();
   window.historyConfig = new Compartment();
@@ -299,7 +300,6 @@ window.onload = () => {
       highlightSelectionMatches({
         wholeWords: true
       }),
-      errorExtension(),
       autocompletion({
         icons: false,
         optionClass: (completion: Completion): string => `cm-completionLabel-${completion.type}`
@@ -380,6 +380,7 @@ window.onload = () => {
         }
       }),
       window.themeConfig.of(EditorView.theme({})),
+      window.selectionConfig.of(EditorView.theme({})),
       window.highlightConfig.of(EditorView.theme({})),
       window.syntaxConfig.of(syntaxHighlighting(defaultHighlightStyle)),
       window.historyConfig.of(history()),
@@ -555,16 +556,6 @@ window.select = (start: number, end: number) => {
   });
 };
 
-window.selectNormal = () => {
-  clearErrors(window.view);
-};
-
-window.selectError = (start: number, end: number) => {
-  window.select(end, end);
-
-  markError(window.view, start, end);
-};
-
 window.selectAll = () => {
   window.view.dispatch({
     selection: { anchor: 0, head: window.view.state.doc.length }
@@ -733,6 +724,30 @@ window.setFont = (family: string, size: number) => {
       }))
     ]
   })
+};
+
+window.setNormalSelection = () => {
+  window.view.dispatch({
+    effects: [
+      window.selectionConfig.reconfigure(EditorView.theme({
+        "&.cm-focused .cm-selectionBackground, & .cm-selectionBackground": {
+          backgroundColor: window.currentTheme.selection + " !important"
+        }
+      }))
+    ]
+  });
+};
+
+window.setErrorSelection = () => {
+  window.view.dispatch({
+    effects: [
+      window.selectionConfig.reconfigure(EditorView.theme({
+        "&.cm-focused .cm-selectionBackground, & .cm-selectionBackground": {
+          backgroundColor: window.currentTheme.selectionError + " !important"
+        }
+      }))
+    ]
+  });
 };
 
 window.setHighlight = (active: boolean) => {
@@ -942,7 +957,7 @@ window.syncTheme = (theme: ColorTheme) => {
         "& .cm-cursor, & .cm-dropCursor": {
           borderLeftColor: theme.caret
         },
-        "&.cm-focused .cm-selectionBackground, & .cm-selectionBackground, .cm-selectionMatch": {
+        ".cm-selectionMatch": {
           backgroundColor: theme.selection + " !important"
         },
         ".cm-tooltip-autocomplete": {
@@ -985,6 +1000,8 @@ window.syncTheme = (theme: ColorTheme) => {
       ])))
     ]
   });
+
+  window.setNormalSelection();
 };
 
 window.nullHandler = (_: EditorView) => {
