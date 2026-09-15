@@ -3,9 +3,9 @@ import {LRParser} from "@lezer/lr"
 import {tracker, keywords} from "./keywords.js"
 export const parser = LRParser.deserialize({
   version: 14,
-  states: ")fQYQPOOOtQPO'#DVO|QPO'#DVO!RQPO'#DVO!WQPO'#DVOOQO'#C{'#C{QYQPOOO!]QPO'#DWOOQO'#DP'#DPQ!bQPOOO!gQPO'#CpO!oQPO,59qO#aQPO,59qO#fQPO'#CqOOQO,59q,59qO#nQPO'#CrO#vQPO'#CtOOQO-E6y-E6yO#{QPO,59rOOQO-E6}-E6}O$^QPO'#C|O$iQPO,59[OOQO,59[,59[O$qQPO1G/]OOQO'#C}'#C}O$vQPO,59]OOQO,59],59]OOQO'#DO'#DOO%OQPO,59^OOQO,59^,59^O%WQPO,59`O%nQPO'#CyO%uQPO'#CxOOQO'#DX'#DXO&TQPO'#DXOOQO'#DQ'#DQO&xQPO1G/^OOQO1G/^1G/^O&xQPO1G/^O'ZQPO,59hOOQO-E6z-E6zOOQO1G.v1G.vOOQO7+$w7+$wOOQO-E6{-E6{OOQO1G.w1G.wOOQO-E6|-E6|OOQO1G.x1G.xO'`QPO1G.zO'eQPO,59aO%]QPO'#CyOOQO,59e,59eO'mQPO,59eO(OQPO,59dOOQO'#DR'#DRO(TQPO,59sOOQO-E7O-E7OOOQO7+$x7+$xO(xQPO7+$xOOQO1G/S1G/SOOQO7+$f7+$fOOQO1G.{1G.{OOQO1G/P1G/POOQO1G/O1G/OOOQO-E7P-E7POOQO<<Hd<<Hd",
-  stateData: ")^~OxOS_OS~OPPOQQOTQOUQOVROWSOXVOZQO~OaZOcYO~Oc]O~Oc_O~Oc`O~OabO~OXVO~OadObfO~OSgOPyaQyaTyaUyaVyaWyaXyaZyavya~ORgO~OahObjO~ObmOgkO~OanO~OYuO[rO]rOcoOkpO~OSwOapXbpX~OadObyO~OazO~OahOb|O~Ob!OOgkO~Oa!PO~O[rO]rOb!SOc!ROkpO~OahO~P%]O[rO]rOc!ROkpO~O^!VOa!VOg!VOn!VOY{X[{X]{Xc{Xk{Xb{Xj{X~OY!YO[rO]rOc!ROkpO~Oa![O~Ob!]O~OahOb!^O~O[rO]rOb!_Oc!ROkpO~Oj!`O~O^!VOa!VOg!VOn!VOY{a[{a]{ac{ak{ab{aj{a~OY!bO[rO]rOc!ROkpO~Ona~",
-  goto: "$X|PPPPPPPPPPPPPPPPPPPP}!Q!TP!W!ZPP!^!^P!h!n!t#O#U#]#lPPP#r#v#{R[PR^QR^RR^SRvbaqboptv!R!T!ZQUORaUQeYRxeQi]S{i!QR!QoQl_R}lSXOURcXQtbS!To!RU!Xt!T!ZR!ZvQ!WrR!a!WTTOUVWOUX^sbotv!R!T!ZR!Up",
+  states: ")fQYQPOOOtQPO'#DVO|QPO'#DVO!RQPO'#DVO!WQPO'#DVOOQO'#C{'#C{QYQPOOO!]QPO'#DWOOQO'#DP'#DPQ!bQPOOO!gQPO'#CpO!oQPO,59qO#aQPO,59qO#fQPO'#CqOOQO,59q,59qO#nQPO'#CrO#vQPO'#CtOOQO-E6y-E6yO#{QPO,59rOOQO-E6}-E6}O$^QPO'#C|O$iQPO,59[OOQO,59[,59[O$qQPO1G/]OOQO'#C}'#C}O$vQPO,59]OOQO,59],59]OOQO'#DO'#DOO%OQPO,59^OOQO,59^,59^O%WQPO,59`O%nQPO'#CyO%uQPO'#CxOOQO'#DX'#DXO&TQPO'#DXOOQO'#DQ'#DQO&xQPO1G/^OOQO1G/^1G/^O&xQPO1G/^O'ZQPO,59hOOQO-E6z-E6zOOQO1G.v1G.vOOQO7+$w7+$wOOQO-E6{-E6{OOQO1G.w1G.wOOQO-E6|-E6|OOQO1G.x1G.xO'`QPO1G.zO'eQPO,59aO%]QPO'#CyOOQO,59e,59eO'mQPO,59eO(OQPO,59dOOQO'#DR'#DRO(aQPO,59sOOQO-E7O-E7OOOQO7+$x7+$xO)UQPO7+$xOOQO1G/S1G/SOOQO7+$f7+$fOOQO1G.{1G.{OOQO1G/P1G/POOQO1G/O1G/OOOQO-E7P-E7POOQO<<Hd<<Hd",
+  stateData: ")j~OxOS_OS~OPPOQQOTQOUQOVROWSOXVOZQO~OaZOcYO~Oc]O~Oc_O~Oc`O~OabO~OXVO~OadObfO~OSgOPyaQyaTyaUyaVyaWyaXyaZyavya~ORgO~OahObjO~ObmOgkO~OanO~OYuO[rO]rOcoOkpO~OSwOapXbpX~OadObyO~OazO~OahOb|O~Ob!OOgkO~Oa!PO~O[rO]rOb!SOc!ROkpO~OahO~P%]O[rO]rOc!ROkpO~O^!VOa!VOg!VOn!VOY{X[{X]{Xc{Xk{Xb{Xj{X~OY!YO[rO]rOc!ROkpO~Oa![O~Ob!]O~OahOb!^O~O[rO]rOb!_Oc!ROkpO~O[rO]rOc!ROj!`OkpO~O^!VOa!VOg!VOn!VOY{a[{a]{ac{ak{ab{aj{a~OY!bO[rO]rOc!ROkpO~Ona~",
+  goto: "$]|PPPPPPPPPPPPPPPPPPPP}!Q!TP!W!ZPP!^!^P!i!o!u#P#V#^#qPPP#w#{$QR[PR^QR^RR^SRvbcqboptv!R!T!U!ZQUORaUQeYRxeQi]S{i!QR!QoQl_R}lSXOURcXQtbS!To!RQ!UpW!Xt!T!U!ZR!ZvQ!WrR!a!WTTOUVWOUXcsboptv!R!T!U!Z",
   nodeNames: "⚠ Import Export From As Globals Extensions Includes Breed To End Own Command Reporter Constant Comment Program Identifier CloseBracket OpenBracket ImportBlock IdentBlock StringBlock String BreedBlock InputBlock CloseParen OpenParen ParenExpression BracketExpression Number",
   maxTerm: 43,
   context: tracker,
@@ -19,5 +19,5 @@ export const parser = LRParser.deserialize({
   tokenizers: [0],
   topRules: {"Program":[0,16]},
   specialized: [{term: 17, get: (value: any, stack: any) => (keywords(value, stack) << 1), external: keywords}],
-  tokenPrec: 379
+  tokenPrec: 391
 })

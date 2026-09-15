@@ -46,7 +46,7 @@ expression {
   (Command | Reporter) (Identifier | Number | String | Constant)*
 }
 
-ParenExpression { OpenParen expression CloseParen }
+ParenExpression { OpenParen expression+ CloseParen }
 BracketExpression { OpenBracket expression* CloseBracket }
 
 @tokens {
