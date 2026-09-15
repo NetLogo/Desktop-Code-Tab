@@ -213,9 +213,6 @@ declare global {
     indent: (view: EditorView) => boolean;
     unindent: (view: EditorView) => boolean;
     handleEnter: (view: EditorView) => boolean;
-    handleOpenBracket: (view: EditorView) => boolean;
-    handleCloseBracket: (view: EditorView) => boolean;
-    handleEnd: (view: EditorView, char: string) => boolean;
     toggleComments: () => void;
     isEditable: () => boolean;
     setEditable: (editable: boolean) => void;
@@ -352,12 +349,7 @@ window.onload = () => {
         { key: "Alt-ArrowUp", run: moveLineUp },
         { key: "Alt-ArrowDown", run: moveLineDown },
         { key: "Tab", run: window.indent, shift: window.unindent },
-        { key: "Enter", run: window.handleEnter },
-        { key: "[", run: window.handleOpenBracket },
-        { key: "]", run: window.handleCloseBracket },
-        { key: "e", run: (view: EditorView) => window.handleEnd(view, "e") },
-        { key: "n", run: (view: EditorView) => window.handleEnd(view, "n") },
-        { key: "d", run: (view: EditorView) => window.handleEnd(view, "d") }
+        { key: "Enter", run: window.handleEnter }
       ]),
       EditorView.clickAddsSelectionRange.of((event: MouseEvent) => event.altKey),
       EditorView.domEventHandlers({
@@ -369,12 +361,25 @@ window.onload = () => {
       }),
       EditorView.updateListener.of((update: ViewUpdate) => {
         if (update.docChanged) {
-          const canUndo = undo({ state: update.view.state, dispatch: () => {} });
-          const canRedo = redo({ state: update.view.state, dispatch: () => {} });
+          const state: EditorState = update.view.state;
+
+          const canUndo = undo({ state, dispatch: () => {} });
+          const canRedo = redo({ state, dispatch: () => {} });
 
           window.bridge.textUpdated(window.overwriting, canUndo, canRedo);
 
           window.setHighlight(true);
+
+          if (!state.readOnly && window.smartIndent) {
+            update.changes.iterChanges((_, __, ___, ____, text: Text) => {
+              const str: string = text.toString();
+
+              if (str.match(/[\[\]\n]/) ||
+                  (str.match(/[end]/) && state.doc.lineAt(state.selection.main.head).text.match(/^ *end/i))) {
+                executeIndentations(update.view);
+              }
+            });
+          }
         } else if (update.selectionSet) {
           window.setHighlight(update.state.selection.main.empty);
         }
@@ -611,54 +616,8 @@ window.handleEnter = (view: EditorView) => {
 
   view.dispatch(view.state.replaceSelection("\n"), { scrollIntoView: true });
 
-  if (window.smartIndent) {
-    executeIndentations(view);
-  }
-
   return true;
-};
-
-window.handleOpenBracket = (view: EditorView) => {
-  if (view.state.readOnly || !window.smartIndent) {
-    return false;
-  }
-
-  view.dispatch(view.state.replaceSelection("["));
-
-  executeIndentations(view);
-
-  return true;
-};
-
-window.handleCloseBracket = (view: EditorView) => {
-  if (view.state.readOnly || !window.smartIndent) {
-    return false;
-  }
-
-  view.dispatch(view.state.replaceSelection("]"));
-
-  executeIndentations(view);
-
-  return true;
-};
-
-window.handleEnd = (view: EditorView, char: string) => {
-  if (view.state.readOnly || !window.smartIndent) {
-    return false;
-  }
-
-  const newDoc: Text = view.state.update(view.state.replaceSelection(char)).newDoc;
-
-  if (newDoc.lineAt(view.state.selection.main.head).text.trimStart().toLowerCase().startsWith("end")) {
-    view.dispatch(view.state.replaceSelection(char));
-
-    executeIndentations(view);
-
-    return true;
-  }
-
-  return false;
-};
+}
 
 window.toggleComments = () => {
   if (window.view.state.readOnly) {
