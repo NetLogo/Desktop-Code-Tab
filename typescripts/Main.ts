@@ -822,21 +822,27 @@ window.setCompiledProgram = (keywords: string[], globals: string[], variables: s
 };
 
 window.autocomplete = (context: CompletionContext) => {
-  let inProc = false;
+  let scope = 0;
 
   ensureSyntaxTree(window.view.state, context.pos)?.iterate({
     from: 0,
     to: context.pos,
     enter(node) {
       if (node.type.id == To) {
-        inProc = true;
-      } else if (node.type.id == End) {
-        inProc = false;
+        scope++;
+      } else if (node.type.id == End && scope > 0) {
+        scope--;
       }
     }
   });
 
   const match = context.matchBefore(identRegex);
+
+  if (scope == 1 && match?.text == "to") {
+    scope = 0;
+  }
+
+  const inProc = scope > 0;
 
   if (context.explicit) {
     return {
