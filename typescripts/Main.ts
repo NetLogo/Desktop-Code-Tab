@@ -349,7 +349,13 @@ window.onload = () => {
         { key: "Alt-ArrowUp", run: moveLineUp },
         { key: "Alt-ArrowDown", run: moveLineDown },
         { key: "Tab", run: window.indent, shift: window.unindent },
-        { key: "Enter", run: window.handleEnter }
+        { key: "Enter", run: window.handleEnter },
+        { key: "Alt-f", run: window.nullHandler },
+        { key: "Alt-e", run: window.nullHandler },
+        { key: "Alt-t", run: window.nullHandler },
+        { key: "Alt-z", run: window.nullHandler },
+        { key: "Alt-a", run: window.nullHandler },
+        { key: "Alt-h", run: window.nullHandler },
       ]),
       EditorView.clickAddsSelectionRange.of((event: MouseEvent) => event.altKey),
       EditorView.domEventHandlers({
