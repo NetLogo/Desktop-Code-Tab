@@ -51,7 +51,7 @@ BracketExpression { OpenBracket expression* CloseBracket }
 
 @tokens {
   space { @whitespace+ }
-  Comment { ";" ![\n]* }
+  Comment [ openedBy=";" ] { ";" ![\n]* }
   identNoDigit { @asciiLetter | "_" | "." | "?" | "=" | "*" | "!" | "<" | ">" | "#" | "+" | "/" | "%" | "$" | "^" | "'" | "&" | "-" | ":" }
   Identifier { identNoDigit (identNoDigit | @digit)* }
   Number { "-"? @digit+ ("." @digit+)? ("e" ("+" | "-") @digit+)? }

@@ -912,6 +912,9 @@ window.syncTheme = (theme: ColorTheme) => {
         "&.cm-focused": {
           outline: "none"
         },
+        "&.cm-focused .cm-nonmatchingBracket": {
+          backgroundColor: "transparent !important"
+        },
         "&, .cm-gutters, .cm-gutter, .cm-gutterElement": {
           backgroundColor: theme.background,
           color: theme.default

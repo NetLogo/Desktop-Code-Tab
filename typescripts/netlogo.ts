@@ -10,7 +10,7 @@ export const parser = LRParser.deserialize({
   maxTerm: 43,
   context: tracker,
   nodeProps: [
-    ["openedBy", 18,"OpenBracket",26,"OpenParen"],
+    ["openedBy", 15,";",18,"OpenBracket",26,"OpenParen"],
     ["closedBy", 19,"CloseBracket",27,"CloseParen"]
   ],
   skippedNodes: [0,15],
